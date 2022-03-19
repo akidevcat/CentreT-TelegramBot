@@ -1,5 +1,6 @@
 ﻿using System.Reflection;
 using CentreT_TelegramBot.Attributes.Telegram.Bot;
+using CentreT_TelegramBot.Extensions;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 
@@ -15,10 +16,10 @@ public class TelegramService : ITelegramService
         _updateHandlerMethods = new List<(IUpdateHandler, MethodInfo)>();
         _errorHandlerMethods = new List<(IErrorHandler, MethodInfo)>();
 
-        // ToDo add arguments check
-
-        _updateHandlerMethods.AddRange(ScanHandlerMethods<IUpdateHandler, UpdateHandlerAttribute>(updateHandlers));
-        _errorHandlerMethods.AddRange(ScanHandlerMethods<IErrorHandler, ErrorHandlerAttribute>(errorHandlers));
+        _updateHandlerMethods.AddRange(ScanHandlerMethods<IUpdateHandler, UpdateHandlerAttribute>(
+            updateHandlers, typeof(Task), typeof(ITelegramBotClient), typeof(Update), typeof(CancellationToken)));
+        _errorHandlerMethods.AddRange(ScanHandlerMethods<IErrorHandler, ErrorHandlerAttribute>(
+            errorHandlers, typeof(Task), typeof(ITelegramBotClient), typeof(Exception), typeof(CancellationToken)));
     }
 
     public async Task HandleErrorAsync(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)
@@ -34,14 +35,25 @@ public class TelegramService : ITelegramService
     public async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
     {
         var arguments = new object[] { botClient, update, cancellationToken };
-        
+
         foreach (var (invoker, methodInfo) in _updateHandlerMethods)
         {
-            await (Task)methodInfo.Invoke(invoker, arguments)!;
+            // Get all attributes that are not appliable for this call
+            var leftAttributes = methodInfo.GetCustomAttributes().Where(x =>
+                x switch
+                {
+                    UpdateTypeFilterAttribute a => !update.IsOfType(a.UpdateType),
+                    _ => false // Skip general attributes
+                });
+            
+            // If attributes are left - we should not invoke this method
+            if (!leftAttributes.Any())
+                await (Task)methodInfo.Invoke(invoker, arguments)!;
         }
     }
 
-    private static IEnumerable<(THandler, MethodInfo)> ScanHandlerMethods<THandler, TAttribute>(IEnumerable<THandler> handlers)
+    private static IEnumerable<(THandler, MethodInfo)> ScanHandlerMethods<THandler, TAttribute>(
+        IEnumerable<THandler> handlers, Type returnType, params Type[] argumentTypes)
     {
         var result = new List<(THandler, MethodInfo)>();
         
@@ -49,11 +61,16 @@ public class TelegramService : ITelegramService
         {
             if (handler == null)
                 throw new ArgumentNullException(nameof(handlers));
-            
+
             var methods = handler.GetType()
-                .GetMethods(BindingFlags.Instance | BindingFlags.NonPublic | 
-                                     BindingFlags.Public | BindingFlags.Static)
-                .Where(m => m.GetCustomAttributes(typeof(TAttribute), true).Length > 0);
+                .GetMethods(BindingFlags.Instance | BindingFlags.NonPublic |
+                            BindingFlags.Public | BindingFlags.Static)
+                // Get only methods with the required TAttribute
+                .Where(m => m.GetCustomAttributes(typeof(TAttribute), true).Length > 0)
+                // Check for return type to be assignable
+                .Where(m => m.ReturnType.IsAssignableTo(returnType))
+                // Check for arguments to be as stated in argumentTypes
+                .Where(m => m.GetParameters().Select(p => p.ParameterType).SequenceEqual(argumentTypes));
 
             result.AddRange(methods.Select(method => (handler, method)));
         }

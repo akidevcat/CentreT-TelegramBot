@@ -2,6 +2,7 @@
 using Telegram.Bot;
 using Telegram.Bot.Exceptions;
 using Telegram.Bot.Types;
+using Telegram.Bot.Types.Enums;
 
 namespace CentreT_TelegramBot.Services;
 
@@ -29,6 +30,7 @@ public class BotCoreService : IBotCoreService
     }
     
     [UpdateHandler]
+    [UpdateTypeFilter(UpdateType.Message)]
     protected Task OnUserMessage(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
     {
         _logger.LogInformation(update.Id.ToString());

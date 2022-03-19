@@ -1,5 +1,6 @@
 ﻿using CentreT_TelegramBot.Attributes;
 using CentreT_TelegramBot.Services;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace CentreT_TelegramBot.Extensions;
 
@@ -23,6 +24,8 @@ public static class ConfigurationServiceCollectionExtensions
         {
             throw new ArgumentNullException(nameof(services));
         }
+        
+        services.TryAddSingleton<IConfigurationService, ConfigurationService>();
 
         var configurationFileTypes =
             from assembly in AppDomain.CurrentDomain.GetAssemblies()

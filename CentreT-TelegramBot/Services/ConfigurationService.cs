@@ -32,11 +32,18 @@ internal class ConfigurationService : IConfigurationService
 
     public void LoadConfigurationObject(Type objectType)
     {
-        var filePath = $"{AppDomain.CurrentDomain.BaseDirectory}/{objectType.Name}.json";
+        _configurationFiles.Add(objectType, ReadConfigurationFile(objectType));
+    }
+
+    public static T ReadConfigurationFile<T>() => (T) ReadConfigurationFile(typeof(T));
+
+    public static object ReadConfigurationFile(Type type)
+    {
+        var filePath = $"{AppDomain.CurrentDomain.BaseDirectory}/{type.Name}.json";
         if (!File.Exists(filePath))
             throw new FileNotFoundException("File for this object type was not found", filePath);
         var fileContent = File.ReadAllText(filePath);
-        var fileObject = JsonConvert.DeserializeObject(fileContent, objectType);
-        _configurationFiles.Add(objectType, fileObject);
+        var fileObject = JsonConvert.DeserializeObject(fileContent, type);
+        return fileObject;
     }
 }

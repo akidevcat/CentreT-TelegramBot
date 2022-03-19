@@ -1,6 +1,6 @@
 ﻿namespace CentreT_TelegramBot.Services;
 
-public interface IBotModeratorStartService
+public interface IErrorHandler
 {
     
 }

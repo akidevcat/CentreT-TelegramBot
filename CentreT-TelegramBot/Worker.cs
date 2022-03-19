@@ -14,12 +14,14 @@ public class Worker : BackgroundService
     private readonly ILogger<Worker> _logger;
     private readonly IConfigurationService _configuration;
     private readonly ITelegramService _telegramService;
+    private readonly IBotCoreService _botCoreService;
 
-    public Worker(ILogger<Worker> logger, IConfigurationService configuration, ITelegramService telegramService)
+    public Worker(ILogger<Worker> logger, IConfigurationService configuration, ITelegramService telegramService, IBotCoreService botCoreService)
     {
         _logger = logger;
         _configuration = configuration;
         _telegramService = telegramService;
+        _botCoreService = botCoreService;
     }
 
     protected override async Task ExecuteAsync(CancellationToken cancellationToken)
@@ -32,25 +34,10 @@ public class Worker : BackgroundService
             throw new ApplicationException(
                 $"Configuration file {nameof(BotToken)}.json has no definition for {nameof(botToken.Token)}. Aborting.");
         
-        // Create new telegram bot
-        var bot = new TelegramBotClient(botToken.Token);
-        ReceiverOptions receiverOptions = new() { };
-
-        // Start polling with telegram service
-        bot.StartReceiving(
-            _telegramService.HandleUpdateAsync, 
-            _telegramService.HandleErrorAsync, 
-            receiverOptions, cancellationToken);
+        // Run telegram bot service
+        _telegramService.RunAsync(botToken.Token, cancellationToken).Start();
         
-        // await bot.ReceiveAsync(
-        //     _telegramService.HandleUpdateAsync,
-        //     _telegramService.HandleErrorAsync,
-        //     receiverOptions, cancellationToken);
-
-        // Continue execution
-        while (!cancellationToken.IsCancellationRequested)
-        {
-            await Task.Delay(1000, cancellationToken);
-        }
+        // Run bot logic service
+        _botCoreService.RunAsync(cancellationToken).Start();
     }
 }

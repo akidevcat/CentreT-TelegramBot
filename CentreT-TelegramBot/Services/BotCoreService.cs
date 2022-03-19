@@ -8,15 +8,30 @@ namespace CentreT_TelegramBot.Services;
 
 public class BotCoreService : IBotCoreService
 {
+    private readonly HashSet<long> _chats;
+
+    private readonly ITelegramContext _telegramContext;
     private readonly ILogger<BotCoreService> _logger;
-    
-    public BotCoreService(ILogger<BotCoreService> logger)
+
+    public BotCoreService(ITelegramContext telegramContext, ILogger<BotCoreService> logger)
     {
+        _telegramContext = telegramContext;
         _logger = logger;
+        
+        _chats = new HashSet<long>();
+    }
+    
+    public async Task RunAsync(CancellationToken cancellationToken)
+    {
+        while (true)
+        {
+            
+            await Task.Delay(TimeSpan.FromSeconds(30), cancellationToken);
+        }
     }
     
     [ErrorHandler]
-    protected Task OnBotError(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)
+    protected Task OnBotError(ITelegramContext telegramContext, Exception exception, CancellationToken cancellationToken)
     {
         var errorMessage = exception switch
         {
@@ -31,10 +46,19 @@ public class BotCoreService : IBotCoreService
     
     [UpdateHandler]
     [UpdateTypeFilter(UpdateType.Message)]
-    protected Task OnUserMessage(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
+    [CommandFilter("register")]
+    protected async Task OnUserMessage(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
     {
-        _logger.LogInformation(update.Id.ToString());
-        
-        return Task.CompletedTask;
+        var chatId = update.Message!.Chat.Id;
+
+        if (!_chats.Contains(chatId))
+        {
+            _chats.Add(chatId);
+            await botClient.SendTextMessageAsync(chatId, "Successfully registered!", cancellationToken: cancellationToken);
+        }
+        else
+        {
+            await botClient.SendTextMessageAsync(chatId, "You are already registered.", cancellationToken: cancellationToken);
+        }
     }
 }

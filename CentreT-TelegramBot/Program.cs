@@ -23,6 +23,7 @@ hostBuilder.ConfigureServices(services =>
     services.TryAddScoped<IUserRepository, UserRepository>();
     // Add telegram service
     services.TryAddSingleton<ITelegramService, TelegramService>();
+    services.TryAddSingleton<ITelegramContext, TelegramContext>();
     // Add bot services
     services.TryAddSingleton<IBotCoreService, BotCoreService>();
     

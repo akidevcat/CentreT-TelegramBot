@@ -5,7 +5,5 @@ namespace CentreT_TelegramBot.Services;
 
 public interface ITelegramService
 {
-    Task HandleErrorAsync(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken);
-
-    Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken);
+    Task RunAsync(string botToken, CancellationToken cancellationToken);
 }

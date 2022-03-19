@@ -2,17 +2,22 @@
 using CentreT_TelegramBot.Attributes.Telegram.Bot;
 using CentreT_TelegramBot.Extensions;
 using Telegram.Bot;
+using Telegram.Bot.Extensions.Polling;
 using Telegram.Bot.Types;
 
 namespace CentreT_TelegramBot.Services;
 
 public class TelegramService : ITelegramService
 {
+    private readonly ITelegramContext _context;
+    
     private readonly List<(IUpdateHandler, MethodInfo)> _updateHandlerMethods;
     private readonly List<(IErrorHandler, MethodInfo)> _errorHandlerMethods;
-    
-    public TelegramService(IEnumerable<IUpdateHandler> updateHandlers, IEnumerable<IErrorHandler> errorHandlers)
+
+    public TelegramService(IEnumerable<IUpdateHandler> updateHandlers, IEnumerable<IErrorHandler> errorHandlers, ITelegramContext context)
     {
+        _context = context;
+        
         _updateHandlerMethods = new List<(IUpdateHandler, MethodInfo)>();
         _errorHandlerMethods = new List<(IErrorHandler, MethodInfo)>();
 
@@ -22,7 +27,22 @@ public class TelegramService : ITelegramService
             errorHandlers, typeof(Task), typeof(ITelegramBotClient), typeof(Exception), typeof(CancellationToken)));
     }
 
-    public async Task HandleErrorAsync(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)
+    public Task RunAsync(string botToken, CancellationToken cancellationToken)
+    {
+        if (_context.BotClient != null)
+            throw new InvalidOperationException($"New bot execution was called but bot is already running.");
+        
+        _context.BotClient = new TelegramBotClient(botToken);
+        ReceiverOptions receiverOptions = new() { };
+
+        // Start polling with telegram service
+        return _context.BotClient.ReceiveAsync(
+            HandleUpdateAsync, 
+            HandleErrorAsync, 
+            receiverOptions, cancellationToken);
+    }
+
+    private async Task HandleErrorAsync(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)
     {
         var arguments = new object[] { botClient, exception, cancellationToken };
         
@@ -32,7 +52,7 @@ public class TelegramService : ITelegramService
         }
     }
 
-    public async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
+    private async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
     {
         var arguments = new object[] { botClient, update, cancellationToken };
 
@@ -43,6 +63,7 @@ public class TelegramService : ITelegramService
                 x switch
                 {
                     UpdateTypeFilterAttribute a => !update.IsOfType(a.UpdateType),
+                    CommandFilterAttribute a => !update.IsCommand(a.Command),
                     _ => false // Skip general attributes
                 });
             

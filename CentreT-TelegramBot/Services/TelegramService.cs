@@ -63,7 +63,10 @@ public class TelegramService : ITelegramService
                 x switch
                 {
                     UpdateTypeFilterAttribute a => !update.IsOfType(a.UpdateType),
+                    ChatTypeFilterAttribute a => !update.IsChatOfType(a.ChatType),
                     CommandFilterAttribute a => !update.IsCommand(a.Command),
+                    FromNotNullFilterAttribute a => update.IsMessageFromNull(),
+                    FromBotFilterAttribute a => a.ShouldBeBot != update.IsMessageFromBot(),
                     _ => false // Skip general attributes
                 });
             

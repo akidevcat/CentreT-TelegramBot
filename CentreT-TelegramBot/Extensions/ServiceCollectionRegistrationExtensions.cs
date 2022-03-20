@@ -6,7 +6,7 @@ public static class ServiceCollectionRegistrationExtensions
 {
     public static void RegisterAllImplementationsOf<T>(
         this IServiceCollection serviceCollection,
-        Action<IServiceCollection, Type, Type> registrationFunc, 
+        Action<IServiceCollection, Type, Func<IServiceProvider, object>> registrationFunc, 
         params Assembly[] assemblies)
     {
         var targetType = typeof(T);
@@ -17,7 +17,7 @@ public static class ServiceCollectionRegistrationExtensions
 
         foreach (var type in types)
         {
-            registrationFunc(serviceCollection, targetType, type);
+            registrationFunc(serviceCollection, targetType, x => x.GetRequiredService(type));
         }
     }
 }

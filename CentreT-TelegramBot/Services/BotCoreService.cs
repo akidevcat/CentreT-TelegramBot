@@ -1,4 +1,8 @@
 ﻿using CentreT_TelegramBot.Attributes.Telegram.Bot;
+using CentreT_TelegramBot.Entities;
+using CentreT_TelegramBot.Entities.States;
+using CentreT_TelegramBot.Models.Configuration;
+using CentreT_TelegramBot.Repositories;
 using Telegram.Bot;
 using Telegram.Bot.Exceptions;
 using Telegram.Bot.Types;
@@ -8,26 +12,23 @@ namespace CentreT_TelegramBot.Services;
 
 public class BotCoreService : IBotCoreService
 {
-    private readonly HashSet<long> _chats;
-
+    private readonly IRepositoryService _repositoryService;
     private readonly ITelegramContext _telegramContext;
+    private readonly IConfigurationService _configurationService;
     private readonly ILogger<BotCoreService> _logger;
-
-    public BotCoreService(ITelegramContext telegramContext, ILogger<BotCoreService> logger)
+    public BotCoreService(IRepositoryService repositoryService, 
+        ITelegramContext telegramContext, IConfigurationService configurationService, 
+        ILogger<BotCoreService> logger)
     {
+        _repositoryService = repositoryService;
         _telegramContext = telegramContext;
+        _configurationService = configurationService;
         _logger = logger;
-        
-        _chats = new HashSet<long>();
     }
     
     public async Task RunAsync(CancellationToken cancellationToken)
     {
-        while (true)
-        {
-            
-            await Task.Delay(TimeSpan.FromSeconds(30), cancellationToken);
-        }
+        
     }
     
     [ErrorHandler]
@@ -46,19 +47,29 @@ public class BotCoreService : IBotCoreService
     
     [UpdateHandler]
     [UpdateTypeFilter(UpdateType.Message)]
-    [CommandFilter("register")]
-    protected async Task OnUserMessage(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
+    [CommandFilter("information")]
+    [FromBotFilter(false)]
+    [ChatTypeFilter(ChatType.Private)]
+    protected async Task OnInformationCommand(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
     {
-        var chatId = update.Message!.Chat.Id;
+        var botMessages = _configurationService.GetConfigurationObject<BotMessages>();
+        var userId = update.Message!.From!.Id;
+        var userContext = await _repositoryService.GetUserContext(userId);
 
-        if (!_chats.Contains(chatId))
-        {
-            _chats.Add(chatId);
-            await botClient.SendTextMessageAsync(chatId, "Successfully registered!", cancellationToken: cancellationToken);
-        }
-        else
-        {
-            await botClient.SendTextMessageAsync(chatId, "You are already registered.", cancellationToken: cancellationToken);
-        }
+        if (userContext.State != UserContextState.Start)
+            return;
+
+        await botClient.SendTextMessageAsync(update.Message.Chat.Id, botMessages.InformationMessage, cancellationToken: cancellationToken);
+    }
+    
+    [UpdateHandler]
+    [UpdateTypeFilter(UpdateType.Message)]
+    [CommandFilter("back")]
+    [FromBotFilter(false)]
+    [ChatTypeFilter(ChatType.Private)]
+    protected async Task OnBackCommand(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
+    {
+        var userId = update.Message!.From!.Id;
+        var userContext = await _repositoryService.GetUserContext(userId);
     }
 }

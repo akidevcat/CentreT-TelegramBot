@@ -19,36 +19,71 @@ public abstract class GenericRepository<T> : IGenericRepository<T> where T : cla
     }
 
     /// <inheritdoc />
-    public virtual async Task<T> Create(T entity)
+    public virtual async Task<T> Create(T entity, bool autoSave = true)
     {
-        return _dbContext.Add(entity).Entity;
+        var result = _dbContext.Add(entity).Entity;
+        if (autoSave)
+        {
+            await Save();
+        }
+
+        return result;
     }
 
     /// <inheritdoc />
-    public virtual async Task<T?> Delete(Guid id)
+    public virtual async Task<T?> Delete(bool autoSave = true, params object?[]? keyValues)
     {
-        var entity = await Get(id);
+        var entity = await Get(keyValues);
         if (entity == null)
+        {
             return null;
-        return _dbSet.Remove(entity).Entity;
+        }
+
+        var result = _dbSet.Remove(entity).Entity;
+        if (autoSave)
+        {
+            await Save();
+        }
+
+        return result;
     }
 
     /// <inheritdoc />
-    public virtual async Task<T?> Get(Guid id)
+    public virtual async Task<T?> Get(params object?[]? keyValues)
     {
-        return await _dbSet.FindAsync(id);
+        return await _dbSet.FindAsync(keyValues);
     }
 
     /// <inheritdoc />
-    public virtual async Task<T?> Update(T entity)
+    public virtual async Task<T> GetOrCreate(T defaultEntity, bool autoSave = true, params object?[]? keyValues)
     {
-        return _dbSet.Update(entity).Entity;
+        var result = await Get(keyValues) ?? await Create(defaultEntity);
+
+        if (autoSave)
+        {
+            await Save();
+        }
+
+        return result;
+    }
+
+    /// <inheritdoc />
+    public virtual async Task<T?> Update(T entity, bool autoSave = true)
+    {
+        var result = _dbSet.Update(entity).Entity;
+        
+        if (autoSave)
+        {
+            await Save();
+        }
+        
+        return result;
     }
 
     /// <inheritdoc />
     public virtual async Task<int> Save()
     {
-        return _dbContext.SaveChanges();
+        return await _dbContext.SaveChangesAsync();
     }
 
     /// <inheritdoc />

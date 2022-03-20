@@ -1,7 +1,9 @@
 using CentreT_TelegramBot.Attributes;
 using CentreT_TelegramBot.Attributes.Telegram.Bot;
 using CentreT_TelegramBot.Models.Configuration;
+using CentreT_TelegramBot.Repositories;
 using CentreT_TelegramBot.Services;
+using Microsoft.EntityFrameworkCore;
 using Telegram.Bot;
 using Telegram.Bot.Exceptions;
 using Telegram.Bot.Extensions.Polling;
@@ -15,13 +17,17 @@ public class Worker : BackgroundService
     private readonly IConfigurationService _configuration;
     private readonly ITelegramService _telegramService;
     private readonly IBotCoreService _botCoreService;
+    private readonly BotDbContext _botDbContext;
 
-    public Worker(ILogger<Worker> logger, IConfigurationService configuration, ITelegramService telegramService, IBotCoreService botCoreService)
+    public Worker(ILogger<Worker> logger, IConfigurationService configuration, 
+        ITelegramService telegramService, IBotCoreService botCoreService,
+        BotDbContext dbContext)
     {
         _logger = logger;
         _configuration = configuration;
         _telegramService = telegramService;
         _botCoreService = botCoreService;
+        _botDbContext = dbContext;
     }
 
     protected override async Task ExecuteAsync(CancellationToken cancellationToken)
@@ -33,11 +39,18 @@ public class Worker : BackgroundService
         if (botToken.Token == null)
             throw new ApplicationException(
                 $"Configuration file {nameof(BotToken)}.json has no definition for {nameof(botToken.Token)}. Aborting.");
+
+        // Check database connection
+        if (!await _botDbContext.Database.CanConnectAsync(cancellationToken))
+        {
+            throw new ApplicationException(
+                $"Cannot connect to database. Aborting.");
+        }
         
         // Run telegram bot service
-        _telegramService.RunAsync(botToken.Token, cancellationToken).Start();
+        _telegramService.RunAsync(botToken.Token, cancellationToken);
         
         // Run bot logic service
-        _botCoreService.RunAsync(cancellationToken).Start();
+        await _botCoreService.RunAsync(cancellationToken);
     }
 }

@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Linq.Expressions;
+using Microsoft.EntityFrameworkCore;
 
 namespace CentreT_TelegramBot.Repositories.Infrastructure;
 
@@ -20,16 +21,32 @@ public interface IGenericRepository<T> where T : class
     /// Gets an entity by key values.
     /// </summary>
     /// <param name="keyValues">Key objects specifying the entity to be found.</param>
-    /// <returns>Found entity. If not found, returns null.</returns>
+    /// <returns>First found entity. If not found, returns null.</returns>
     public Task<T?> Get(params object?[]? keyValues);
+    
+    /// <summary>
+    /// Gets an entity by predicate.
+    /// </summary>
+    /// <param name="predicate">Predicate specifying the entity to be found.</param>
+    /// <returns>First found entity. If not found, returns null.</returns>
+    public Task<T?> Get(Expression<Func<T, bool>> predicate);
+    
+    /// <summary>
+    /// Gets an entity by predicate. If not found, creates new <see cref="defaultEntity"/> entity.
+    /// </summary>
+    /// <param name="defaultEntity">Entity that should be placed if not found.</param>
+    /// <param name="predicate">Predicate specifying the entity to be found.</param>
+    /// <param name="autoSave">Invokes <see cref="Save"/>.</param>
+    /// <returns>Found entity. If not found, returns created one.</returns>
+    public Task<T> GetOrCreate(T defaultEntity, Expression<Func<T, bool>> predicate, bool autoSave = true);
     
     /// <summary>
     /// Gets an entity by key values. If not found, creates new <see cref="defaultEntity"/> entity.
     /// </summary>
     /// <param name="keyValues">Key objects specifying the entity to be found.</param>
-    /// /// <param name="autoSave">Invokes <see cref="Save"/></param>
+    /// /// <param name="autoSave">Invokes <see cref="Save"/>.</param>
     /// <param name="defaultEntity">Entity that should be placed if not found.</param>
-    /// <returns>Found entity. If not found, returns <see cref="defaultEntity"/>.</returns>
+    /// <returns>Found entity. If not found, returns created one.</returns>
     public Task<T> GetOrCreate(T defaultEntity, bool autoSave = true, params object?[]? keyValues);
 
     /// <summary>

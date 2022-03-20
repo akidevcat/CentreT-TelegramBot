@@ -1,12 +1,15 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using CentreT_TelegramBot.Entities.States;
+using Microsoft.EntityFrameworkCore;
 
 namespace CentreT_TelegramBot.Entities;
 
+[Index(nameof(Id), nameof(UserId), IsUnique = true)]
 public class UserJoinContext
 {
     [Key]
+    //[DatabaseGenerated(DatabaseGeneratedOption.Computed)]
     public Guid Id { get; set; }
     
     [ForeignKey(nameof(User))]
@@ -19,6 +22,11 @@ public class UserJoinContext
     
     public string? Name { get; set; }
     public string? Pronouns { get; set; }
-    
-    public UserJoinContextState State { get; set; }
+
+    public UserJoinContextState State { get; set; } = UserJoinContextState.Chat;
+
+    public UserJoinContext(long userId)
+    {
+        UserId = userId;
+    }
 }

@@ -10,13 +10,16 @@ namespace CentreT_TelegramBot.Services;
 public class TelegramService : ITelegramService
 {
     private readonly ITelegramContext _context;
+    private readonly ILogger<TelegramService> _logger;
     
     private readonly List<(IUpdateHandler, MethodInfo)> _updateHandlerMethods;
     private readonly List<(IErrorHandler, MethodInfo)> _errorHandlerMethods;
 
-    public TelegramService(IEnumerable<IUpdateHandler> updateHandlers, IEnumerable<IErrorHandler> errorHandlers, ITelegramContext context)
+    public TelegramService(IEnumerable<IUpdateHandler> updateHandlers, IEnumerable<IErrorHandler> errorHandlers, ITelegramContext context,
+        ILogger<TelegramService> logger)
     {
         _context = context;
+        _logger = logger;
         
         _updateHandlerMethods = new List<(IUpdateHandler, MethodInfo)>();
         _errorHandlerMethods = new List<(IErrorHandler, MethodInfo)>();
@@ -27,7 +30,7 @@ public class TelegramService : ITelegramService
             errorHandlers, typeof(Task), typeof(ITelegramBotClient), typeof(Exception), typeof(CancellationToken)));
     }
 
-    public Task RunAsync(string botToken, CancellationToken cancellationToken)
+    public void Run(string botToken, CancellationToken cancellationToken)
     {
         if (_context.BotClient != null)
             throw new InvalidOperationException($"New bot execution was called but bot is already running.");
@@ -36,7 +39,7 @@ public class TelegramService : ITelegramService
         ReceiverOptions receiverOptions = new() { };
 
         // Start polling with telegram service
-        return _context.BotClient.ReceiveAsync(
+        _context.BotClient.StartReceiving(
             HandleUpdateAsync, 
             HandleErrorAsync, 
             receiverOptions, cancellationToken);

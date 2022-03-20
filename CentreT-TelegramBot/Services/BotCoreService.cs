@@ -32,7 +32,7 @@ public class BotCoreService : IBotCoreService
     }
     
     [ErrorHandler]
-    protected Task OnBotError(ITelegramContext telegramContext, Exception exception, CancellationToken cancellationToken)
+    protected Task OnBotError(ITelegramBotClient telegramContext, Exception exception, CancellationToken cancellationToken)
     {
         var errorMessage = exception switch
         {
@@ -60,6 +60,29 @@ public class BotCoreService : IBotCoreService
             return;
 
         await botClient.SendTextMessageAsync(update.Message.Chat.Id, botMessages.InformationMessage, cancellationToken: cancellationToken);
+    }
+    
+    [UpdateHandler]
+    [UpdateTypeFilter(UpdateType.Message)]
+    [CommandFilter("join")]
+    [FromBotFilter(false)]
+    [ChatTypeFilter(ChatType.Private)]
+    protected async Task OnJoinCommand(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
+    {
+        var botMessages = _configurationService.GetConfigurationObject<BotMessages>();
+        var userId = update.Message!.From!.Id;
+        var userContext = await _repositoryService.GetUserContext(userId);
+
+        if (userContext.State != UserContextState.Start)
+            return;
+
+        var userJoinContext = await _repositoryService.GetUserJoinContext(userId);
+        
+        userContext.State = UserContextState.JoinRequest;
+        await _repositoryService.SaveChanges();
+        //await _repositoryService.UpdateUserContext(userContext);
+
+        await botClient.SendTextMessageAsync(update.Message.Chat.Id, botMessages.JoinMessage, cancellationToken: cancellationToken);
     }
     
     [UpdateHandler]

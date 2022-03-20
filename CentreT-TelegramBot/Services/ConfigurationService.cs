@@ -27,7 +27,7 @@ internal class ConfigurationService : IConfigurationService
             return result;
         throw new ArgumentException("Configuration object was not found", nameof(objectType));
     }
-
+    
     public void LoadConfigurationObject<T>() => LoadConfigurationObject(typeof(T));
 
     public void LoadConfigurationObject(Type objectType)

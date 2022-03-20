@@ -20,10 +20,12 @@ hostBuilder.ConfigureServices(services =>
     // Add configuration services
     services.AddConfigurationFiles();
     
-    // Add databases services
+    // Add database services
     services.AddDbContext<BotDbContext>(options => options.UseSqlServer(dbConnection.ConnectionString), ServiceLifetime.Singleton);
     services.TryAddSingleton<IUserRepository, UserRepository>();
     services.TryAddSingleton<IUserContextRepository, UserContextRepository>();
+    services.TryAddSingleton<IUserJoinContextRepository, UserJoinContextRepository>();
+    services.TryAddSingleton<IRepositoryService, RepositoryService>();
     
     // Add telegram service
     services.TryAddSingleton<ITelegramService, TelegramService>();

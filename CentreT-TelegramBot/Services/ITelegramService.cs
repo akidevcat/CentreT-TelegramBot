@@ -5,5 +5,5 @@ namespace CentreT_TelegramBot.Services;
 
 public interface ITelegramService
 {
-    Task RunAsync(string botToken, CancellationToken cancellationToken);
+    void Run(string botToken, CancellationToken cancellationToken);
 }

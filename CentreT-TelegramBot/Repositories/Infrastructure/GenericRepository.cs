@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Linq.Expressions;
+using Microsoft.EntityFrameworkCore;
 
 namespace CentreT_TelegramBot.Repositories.Infrastructure;
 
@@ -55,6 +56,25 @@ public abstract class GenericRepository<T> : IGenericRepository<T> where T : cla
     }
 
     /// <inheritdoc />
+    public async Task<T?> Get(Expression<Func<T, bool>> predicate)
+    {
+        return await _dbSet.FirstOrDefaultAsync(predicate);
+    }
+
+    /// <inheritdoc />
+    public async Task<T> GetOrCreate(T defaultEntity, Expression<Func<T, bool>> predicate, bool autoSave = true)
+    {
+        var result = await Get(predicate) ?? await Create(defaultEntity);
+        
+        if (autoSave)
+        {
+            await Save();
+        }
+
+        return result;
+    }
+
+    /// <inheritdoc />
     public virtual async Task<T> GetOrCreate(T defaultEntity, bool autoSave = true, params object?[]? keyValues)
     {
         var result = await Get(keyValues) ?? await Create(defaultEntity);
@@ -87,8 +107,8 @@ public abstract class GenericRepository<T> : IGenericRepository<T> where T : cla
     }
 
     /// <inheritdoc />
-    public virtual async Task<DbSet<T>> All()
+    public virtual Task<DbSet<T>> All()
     {
-        return _dbSet;
+        return Task.FromResult(_dbSet);
     }
 }

@@ -10,13 +10,13 @@ public class UserContext
 {
     [Key]
     [ForeignKey(nameof(User))]
+    [DatabaseGenerated(DatabaseGeneratedOption.None)]
     public long UserId { get; set; }
     public User? User { get; set; }
-    public States.UserContextState State { get; set; }
+    public UserContextState State { get; set; } = UserContextState.Start;
 
     public UserContext(long userId)
     {
         UserId = userId;
-        State = UserContextState.Start;
     }
 }

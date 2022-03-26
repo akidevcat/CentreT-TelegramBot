@@ -17,6 +17,8 @@ public interface IRepositoryService
     Task<IQueryable<UserJoinRequest>> GetUserJoinRequestsByUser(long userId);
     
     Task<UserJoinRequest> CreateUserJoinRequest(long userId);
+    
+    Task<UserJoinRequest> GetOrCreateActiveUserJoinRequest(long userId);
 
     // /// <summary>
     // /// Gets an active (not <see cref="UserJoinContextState.AwaitingResponse"/> state) <see cref="UserJoinContext"/>.
@@ -55,7 +57,7 @@ public interface IRepositoryService
     Task<User> GetOrCreateUser(long userId);
 
     //Task DeleteUserJoinContext(UserJoinContext userJoinContext);
-    Task DeleteActiveUserJoinRequest(long userId);
+    Task<bool> DeleteActiveUserJoinRequest(long userId);
     
     /// <summary>
     /// Saves any changes implicitly made.

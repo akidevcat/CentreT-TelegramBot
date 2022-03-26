@@ -8,11 +8,56 @@ public static class TelegramBotUpdateExtensions
     public static bool IsOfType(this Update update, UpdateType updateType) => 
         update.Type == updateType;
 
-    public static bool IsCommand(this Update update, string command) =>
-        IsOfType(update, UpdateType.Message) && 
-        // If command is empty - check is it command or not
-        (command.Length == 0 && (!update.Message!.Text?.ToLower().Split(" ").FirstOrDefault()?.StartsWith("/") ?? false) ||
-        update.Message!.Text?.ToLower().Split(" ").FirstOrDefault() == "/" + command.ToLower());
+    // public static bool StartsWithCommand(this Update update, string command)
+    // {
+    //     if (!IsOfType(update, UpdateType.Message))
+    //     {
+    //         return false;
+    //     }
+    //
+    //     var text = update.Message?.Text?.ToLower();
+    //     var firstArg = text?.Split(" ").FirstOrDefault();
+    //
+    //     // If command pattern is empty
+    //     if (command.Length == 0)
+    //     {
+    //         return firstArg != null;
+    //     }
+    //
+    //     return firstArg == command.ToLower();
+    // }
+        
+    public static bool StartsWithCommands(this Update update, ISet<string> commands)
+    {
+        if (!IsOfType(update, UpdateType.Message))
+        {
+            return false;
+        }
+
+        var text = update.Message?.Text?.ToLower();
+        var firstArg = text?.Split(" ").FirstOrDefault();
+
+        if (firstArg == null)
+            return false;
+        
+        return commands.Contains(firstArg);
+    }
+    
+    public static bool StartsWithBackslash(this Update update)
+    {
+        if (!IsOfType(update, UpdateType.Message))
+        {
+            return false;
+        }
+
+        var text = update.Message?.Text?.ToLower();
+        var firstArg = text?.Split(" ").FirstOrDefault();
+
+        if (firstArg == null)
+            return false;
+        
+        return firstArg.StartsWith("/");
+    }
 
     public static bool IsMessageFromNull(this Update update) =>
         IsOfType(update, UpdateType.Message) && update.Message!.From == null;

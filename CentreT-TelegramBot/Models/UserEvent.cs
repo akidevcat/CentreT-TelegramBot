@@ -3,7 +3,7 @@
 public enum UserEvent
 {
     StartCommand,
-    InformationCommand, JoinCommand, ProfileCommand,
+    InformationCommand, JoinCommand, ProfileCommand, EditCommand,
     BackCommand, NextCommand, ConfirmCommand,
     UpdateMessage,
     ArgumentFilled

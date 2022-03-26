@@ -62,19 +62,21 @@ public class TelegramService : ITelegramService
         foreach (var (invoker, methodInfo) in _updateHandlerMethods)
         {
             // Get all attributes that are not appliable for this call
-            var leftAttributes = methodInfo.GetCustomAttributes().Where(x =>
+            var leftAttribute = methodInfo.GetCustomAttributes().FirstOrDefault(x =>
                 x switch
                 {
                     UpdateTypeFilterAttribute a => !update.IsOfType(a.UpdateType),
                     ChatTypeFilterAttribute a => !update.IsChatOfType(a.ChatType),
-                    CommandFilterAttribute a => !update.IsCommand(a.Command),
-                    FromNotNullFilterAttribute a => update.IsMessageFromNull(),
+                    IncludesCommandsFilterAttribute a => !update.StartsWithCommands(a.Commands),
+                    ExcludesCommandsFilterAttribute a => !(update.StartsWithCommands(a.Commands) ^ true),
+                    ExcludesAnyBackslashCommandFilterAttribute => update.StartsWithBackslash(),
+                    FromNotNullFilterAttribute => update.IsMessageFromNull(),
                     FromBotFilterAttribute a => a.ShouldBeBot != update.IsMessageFromBot(),
                     _ => false // Skip general attributes
                 });
             
             // If attributes are left - we should not invoke this method
-            if (!leftAttributes.Any())
+            if (leftAttribute == null)
                 await (Task)methodInfo.Invoke(invoker, arguments)!;
         }
     }

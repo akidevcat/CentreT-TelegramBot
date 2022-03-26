@@ -29,5 +29,7 @@ public class UserJoinRequest
         DateCreated = DateTime.Now;
     }
 
-    public bool IsActive => DateCreated == null;
+    public bool Completed => ChatId != null;
+
+    public bool Active => DateCreated == null;
 }

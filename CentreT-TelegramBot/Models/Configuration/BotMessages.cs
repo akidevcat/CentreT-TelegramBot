@@ -29,6 +29,7 @@ public class BotMessages
     public string JoinRequestCancelled = "4A532D04-47D1-4D3F-836C-60581461420D";
     // Error messages
     public string InvalidAction = "F9396515-5C15-4FD2-973A-32FA263A174B";
+    public string InvalidAge = "D416C91B-7765-4D5F-980A-45BE4DC52227";
     public string MessageTooLong = "7FF82DCC-8B8A-47E6-9F57-62480F30F9C3";
     public string ChatNotFound = "723E719B-3DDA-4DE0-A1E5-5B83B9D875B5";
     public string JoinRequestAlreadyExists = "47748A2D-66D6-4237-870F-E3E4610AA132";

@@ -57,6 +57,15 @@ public class RepositoryService : IRepositoryService
         return await _userJoinRequestRepository.Create(new UserJoinRequest(userId));
     }
 
+    public async Task<UserJoinRequest> GetOrCreateActiveUserJoinRequest(long userId)
+    {
+        var request = await GetActiveUserJoinRequest(userId);
+        if (request != null)
+            return request;
+        
+        return await CreateUserJoinRequest(userId);
+    }
+
     // public async Task<UserJoinContext?> GetActiveUserJoinContext(long userId)
     // {
     //     return await _userJoinContextRepository.Get(x =>
@@ -92,9 +101,16 @@ public class RepositoryService : IRepositoryService
         return await _userRepository.GetOrCreate(new User(userId), true, userId);
     }
 
-    public Task DeleteActiveUserJoinRequest(long userId)
+    public async Task<bool> DeleteActiveUserJoinRequest(long userId)
     {
-        throw new NotImplementedException();
+        var result = await GetActiveUserJoinRequest(userId);
+        if (result != null)
+        {
+            await _userJoinRequestRepository.Delete(result);
+            return true;
+        }
+
+        return false;
     }
 
     // public async Task DeleteUserJoinContext(UserJoinContext userJoinContext)

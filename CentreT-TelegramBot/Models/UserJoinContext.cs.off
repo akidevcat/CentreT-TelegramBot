@@ -5,11 +5,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CentreT_TelegramBot.Entities;
 
-[Index(nameof(Id), nameof(UserId), IsUnique = true)]
+[Index(nameof(Id), IsUnique = true)]
+[Index(nameof(UserId), IsUnique = false)]
 public class UserJoinContext
 {
     [Key]
-    //[DatabaseGenerated(DatabaseGeneratedOption.Computed)]
     public Guid Id { get; set; }
     
     [ForeignKey(nameof(User))]
@@ -17,7 +17,8 @@ public class UserJoinContext
     public User? User { get; set; }
     
     [ForeignKey(nameof(Chat))]
-    public long ChatId { get; set; }
+    public long? ChatId { get; set; }
+    //public string? ChatName { get; set; }
     public Chat? Chat { get; set; }
     
     public string? Name { get; set; }

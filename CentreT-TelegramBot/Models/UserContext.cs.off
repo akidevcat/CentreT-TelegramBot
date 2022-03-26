@@ -13,7 +13,7 @@ public class UserContext
     [DatabaseGenerated(DatabaseGeneratedOption.None)]
     public long UserId { get; set; }
     public User? User { get; set; }
-    public UserContextState State { get; set; } = UserContextState.Start;
+    public UserState State { get; set; } = UserState.Start;
 
     public UserContext(long userId)
     {

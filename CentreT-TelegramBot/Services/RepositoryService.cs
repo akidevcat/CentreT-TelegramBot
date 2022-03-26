@@ -1,4 +1,6 @@
 ﻿using CentreT_TelegramBot.Entities;
+using CentreT_TelegramBot.Entities.States;
+using CentreT_TelegramBot.Models;
 using CentreT_TelegramBot.Repositories;
 
 namespace CentreT_TelegramBot.Services;
@@ -7,47 +9,103 @@ public class RepositoryService : IRepositoryService
 {
 
     private readonly IUserRepository _userRepository;
-    private readonly IUserContextRepository _userContextRepository;
-    private readonly IUserJoinContextRepository _userJoinContextRepository;
+    // private readonly IUserContextRepository _userContextRepository;
+    // private readonly IUserJoinContextRepository _userJoinContextRepository;
+    private readonly IUserJoinRequestRepository _userJoinRequestRepository;
+    private readonly IChatRepository _chatRepository;
     
-    public RepositoryService(IUserRepository userRepository, IUserContextRepository userContextRepository, 
-                             IUserJoinContextRepository userJoinContextRepository)
+    public RepositoryService(IUserRepository userRepository, IUserJoinRequestRepository userJoinRequestRepository
+        , IChatRepository chatRepository)
     {
         _userRepository = userRepository;
-        _userContextRepository = userContextRepository;
-        _userJoinContextRepository = userJoinContextRepository;
+        _userJoinRequestRepository = userJoinRequestRepository;
+        _chatRepository = chatRepository;
     }
 
-    public async Task<UserJoinContext> GetUserJoinContext(long userId)
+    public async Task<Chat?> GetChat(string name)
     {
-        // Create new User if it does not exist
-        await GetUser(userId);
-        // Get or create UserJoinContext
-        return await _userJoinContextRepository.GetOrCreate(new UserJoinContext(userId), x => x.UserId == userId);
+        return await _chatRepository.GetFirst(x =>
+            x.Name == name);
     }
 
-    public async Task<UserContext> GetUserContext(long userId)
+    public async Task<UserJoinRequest?> GetActiveUserJoinRequest(long userId)
     {
-        // Create new User if it does not exist
-        await GetUser(userId);
-        // Get or create UserContext
-        return await _userContextRepository.GetOrCreate(new UserContext(userId), true, userId);
+        return await _userJoinRequestRepository.GetFirst(x =>
+            x.UserId == userId && x.DateCreated == null);
     }
 
-    public Task<UserContext> UpdateUserContext(UserContext userContext)
+    public async Task<UserJoinRequest?> GetUserJoinRequestByChat(long chatId)
     {
-        throw new NotImplementedException();
+        return await _userJoinRequestRepository.GetFirst(x =>
+            x.ChatId == chatId);
     }
 
-    public async Task<User> GetUser(long userId)
+    public async Task<UserJoinRequest?> GetUserJoinRequestByUser(long userId)
+    {
+        return await _userJoinRequestRepository.GetFirst(x =>
+            x.UserId == userId);
+    }
+
+    public async Task<IQueryable<UserJoinRequest>> GetUserJoinRequestsByUser(long userId)
+    {
+        return await _userJoinRequestRepository.Get(x =>
+            x.UserId == userId && x.DateCreated == null);
+    }
+
+    public async Task<UserJoinRequest> CreateUserJoinRequest(long userId)
+    {
+        return await _userJoinRequestRepository.Create(new UserJoinRequest(userId));
+    }
+
+    // public async Task<UserJoinContext?> GetActiveUserJoinContext(long userId)
+    // {
+    //     return await _userJoinContextRepository.Get(x =>
+    //         x.UserId == userId && x.State != UserJoinContextState.AwaitingResponse);
+    // }
+    //
+    // public async Task<UserJoinContext> GetOrCreateActiveUserJoinContext(long userId)
+    // {
+    //     // Create new User if it does not exist
+    //     await GetOrCreateUser(userId);
+    //     // Get or create UserJoinContext
+    //     // UserJoinContext which are AwaitingResponse should be ignored as they do not lock the state
+    //     return await _userJoinContextRepository.GetOrCreate(new UserJoinContext(userId), 
+    //         x => x.UserId == userId && x.State != UserJoinContextState.AwaitingResponse);
+    // }
+    //
+    // public async Task<UserContext> GetOrCreateUserContext(long userId)
+    // {
+    //     // Create new User if it does not exist
+    //     await GetOrCreateUser(userId);
+    //     // Get or create UserContext
+    //     return await _userContextRepository.GetOrCreate(new UserContext(userId), true, userId);
+    // }
+    //
+    // public Task<UserContext> UpdateUserContext(UserContext userContext)
+    // {
+    //     throw new NotImplementedException();
+    // }
+
+    public async Task<User> GetOrCreateUser(long userId)
     {
         // Get or create User
         return await _userRepository.GetOrCreate(new User(userId), true, userId);
     }
 
+    public Task DeleteActiveUserJoinRequest(long userId)
+    {
+        throw new NotImplementedException();
+    }
+
+    // public async Task DeleteUserJoinContext(UserJoinContext userJoinContext)
+    // {
+    //     await _userJoinContextRepository.Delete(userJoinContext);
+    // }
+
     public async Task SaveChanges()
     {
         await _userRepository.Save();
-        await _userContextRepository.Save();
+        await _userJoinRequestRepository.Save();
+        // await _userContextRepository.Save();
     }
 }

@@ -9,7 +9,10 @@ public static class TelegramBotUpdateExtensions
         update.Type == updateType;
 
     public static bool IsCommand(this Update update, string command) =>
-        IsOfType(update, UpdateType.Message) && update.Message!.Text?.ToLower().Split(" ").FirstOrDefault() == "/" + command.ToLower();
+        IsOfType(update, UpdateType.Message) && 
+        // If command is empty - check is it command or not
+        (command.Length == 0 && (!update.Message!.Text?.ToLower().Split(" ").FirstOrDefault()?.StartsWith("/") ?? false) ||
+        update.Message!.Text?.ToLower().Split(" ").FirstOrDefault() == "/" + command.ToLower());
 
     public static bool IsMessageFromNull(this Update update) =>
         IsOfType(update, UpdateType.Message) && update.Message!.From == null;

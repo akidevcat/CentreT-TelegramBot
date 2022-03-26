@@ -1,4 +1,5 @@
-﻿using System.Linq.Expressions;
+﻿using System.Linq;
+using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 
 namespace CentreT_TelegramBot.Repositories.Infrastructure;
@@ -22,14 +23,21 @@ public interface IGenericRepository<T> where T : class
     /// </summary>
     /// <param name="keyValues">Key objects specifying the entity to be found.</param>
     /// <returns>First found entity. If not found, returns null.</returns>
-    public Task<T?> Get(params object?[]? keyValues);
+    public Task<T?> GetFirst(params object?[]? keyValues);
     
     /// <summary>
     /// Gets an entity by predicate.
     /// </summary>
     /// <param name="predicate">Predicate specifying the entity to be found.</param>
     /// <returns>First found entity. If not found, returns null.</returns>
-    public Task<T?> Get(Expression<Func<T, bool>> predicate);
+    public Task<T?> GetFirst(Expression<Func<T, bool>> predicate);
+    
+    /// <summary>
+    /// Gets entities by predicate.
+    /// </summary>
+    /// <param name="predicate">Predicate specifying the entities to be found.</param>
+    /// <returns>All found entity. If not found, returns empty <see cref="IQueryable{T}"/>.</returns>
+    public Task<IQueryable<T>> Get(Expression<Func<T, bool>> predicate);
     
     /// <summary>
     /// Gets an entity by predicate. If not found, creates new <see cref="defaultEntity"/> entity.
@@ -64,6 +72,8 @@ public interface IGenericRepository<T> where T : class
     /// <param name="keyValues">Objects specifying the entity to be deleted.</param>
     /// <returns>Deleted entity. If not found, returns null.</returns>
     public Task<T?> Delete(bool autoSave = true, params object?[]? keyValues);
+
+    public Task Delete(T entity, bool autoSave = true);
 
     /// <summary>
     /// Saves this <see cref="DbContext"/>.

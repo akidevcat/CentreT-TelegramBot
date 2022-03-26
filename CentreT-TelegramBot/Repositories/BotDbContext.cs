@@ -2,6 +2,7 @@
 #pragma warning disable CS8618
 
 using CentreT_TelegramBot.Entities;
+using CentreT_TelegramBot.Models;
 using EntityFramework.Exceptions.SqlServer;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,8 +11,10 @@ namespace CentreT_TelegramBot.Repositories;
 public class BotDbContext : DbContext
 {
     public DbSet<User> Users { get; set; }
-    public DbSet<UserContext> UserContexts { get; set; }
-    public DbSet<UserJoinContext> UserJoinContexts { get; set; }
+    public DbSet<Chat> Chats { get; set; }
+    // public DbSet<UserContext> UserContexts { get; set; }
+    // public DbSet<UserJoinContext> UserJoinContexts { get; set; }
+    public DbSet<UserJoinRequest> UserJoinRequests { get; set; }
 
     public BotDbContext(DbContextOptions<BotDbContext> options) : base(options)
     {
@@ -33,13 +36,14 @@ public class BotDbContext : DbContext
 
         // modelBuilder.Entity<UserJoinContext>()
         //     .HasKey(nameof(UserJoinContext.Id), nameof(UserJoinContext.UserId));
-        modelBuilder.Entity<UserJoinContext>()
-            .HasAlternateKey(nameof(UserJoinContext.UserId));
         
-        modelBuilder.Entity<UserJoinContext>()
-            .HasOne(nameof(UserJoinContext.Chat))
-            .WithOne()
-            .HasPrincipalKey(typeof(Chat), nameof(Chat.Name));
+        // modelBuilder.Entity<UserJoinContext>()
+        //     .HasAlternateKey(nameof(UserJoinContext.UserId));
+        
+        // modelBuilder.Entity<UserJoinContext>()
+        //     .HasOne(nameof(UserJoinContext.Chat))
+        //     .WithOne()
+        //     .HasPrincipalKey(typeof(Chat), nameof(Chat.Name));
 
         #endregion
 

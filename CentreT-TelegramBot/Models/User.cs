@@ -1,9 +1,9 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using CentreT_TelegramBot.Entities.States;
+using CentreT_TelegramBot.Models.States;
 using Microsoft.EntityFrameworkCore;
 
-namespace CentreT_TelegramBot.Entities;
+namespace CentreT_TelegramBot.Models;
 
 [Index(nameof(Id), IsUnique = true)]
 public class User

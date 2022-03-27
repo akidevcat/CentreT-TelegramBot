@@ -1,4 +1,4 @@
-﻿namespace CentreT_TelegramBot.Entities.States;
+﻿namespace CentreT_TelegramBot.Models.States;
 
 public enum UserEvent
 {

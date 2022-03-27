@@ -1,6 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using CentreT_TelegramBot.Entities;
 
 namespace CentreT_TelegramBot.Models;
 

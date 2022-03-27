@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 
-namespace CentreT_TelegramBot.Entities;
+namespace CentreT_TelegramBot.Models;
 
 [Index(nameof(Id), IsUnique = true)]
 [Index(nameof(Name), IsUnique = false)]

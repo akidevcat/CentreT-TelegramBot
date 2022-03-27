@@ -2,7 +2,7 @@
 
 using Appccelerate.StateMachine.AsyncMachine;
 using Appccelerate.StateMachine.AsyncMachine.Reports;
-using CentreT_TelegramBot.Entities.States;
+using CentreT_TelegramBot.Models.States;
 using CentreT_TelegramBot.Services;
 using CentreT_TelegramBot.StateMachine;
 using NUnit.Framework;

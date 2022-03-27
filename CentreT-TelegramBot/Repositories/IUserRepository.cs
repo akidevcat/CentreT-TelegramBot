@@ -2,7 +2,7 @@
 
 namespace CentreT_TelegramBot.Repositories;
 
-public interface IUserRepository : IGenericRepository<Entities.User>
+public interface IUserRepository : IGenericRepository<Models.User>
 {
     
 }

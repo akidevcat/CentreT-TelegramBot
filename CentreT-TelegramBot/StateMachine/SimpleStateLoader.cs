@@ -1,7 +1,7 @@
 ﻿using Appccelerate.StateMachine;
 using Appccelerate.StateMachine.Infrastructure;
 using Appccelerate.StateMachine.Persistence;
-using CentreT_TelegramBot.Entities.States;
+using CentreT_TelegramBot.Models.States;
 
 namespace CentreT_TelegramBot.StateMachine;
 

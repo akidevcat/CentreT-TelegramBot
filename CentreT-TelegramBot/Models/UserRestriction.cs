@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 
-namespace CentreT_TelegramBot.Entities;
+namespace CentreT_TelegramBot.Models;
 
 public abstract class UserRestriction
 {

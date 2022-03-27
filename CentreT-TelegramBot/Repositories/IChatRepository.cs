@@ -2,7 +2,7 @@
 
 namespace CentreT_TelegramBot.Repositories;
 
-public interface IChatRepository : IGenericRepository<Entities.Chat>
+public interface IChatRepository : IGenericRepository<Models.Chat>
 {
     
 }

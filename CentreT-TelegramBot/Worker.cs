@@ -50,7 +50,7 @@ public class Worker : BackgroundService
         // Run telegram bot service
         _telegramService.Run(botToken.Token, cancellationToken);
         
-        // Run bot logic service
+        // Run bot logic services
         await _botCoreService.RunAsync(cancellationToken);
     }
 }

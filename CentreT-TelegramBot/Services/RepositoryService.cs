@@ -1,6 +1,4 @@
-﻿using CentreT_TelegramBot.Entities;
-using CentreT_TelegramBot.Entities.States;
-using CentreT_TelegramBot.Models;
+﻿using CentreT_TelegramBot.Models;
 using CentreT_TelegramBot.Repositories;
 
 namespace CentreT_TelegramBot.Services;

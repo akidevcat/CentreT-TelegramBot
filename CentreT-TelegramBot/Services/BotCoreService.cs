@@ -4,10 +4,9 @@ using Appccelerate.StateMachine.AsyncMachine;
 using Appccelerate.StateMachine.AsyncMachine.Events;
 using Appccelerate.StateMachine.AsyncMachine.Reports;
 using CentreT_TelegramBot.Attributes.Telegram.Bot;
-using CentreT_TelegramBot.Entities;
-using CentreT_TelegramBot.Entities.States;
-using CentreT_TelegramBot.Extensions;
+using CentreT_TelegramBot.Models.States;
 using CentreT_TelegramBot.Models.Configuration;
+using CentreT_TelegramBot.Extensions;
 using CentreT_TelegramBot.Repositories;
 using CentreT_TelegramBot.StateMachine;
 using Telegram.Bot;
@@ -15,7 +14,6 @@ using Telegram.Bot.Exceptions;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
-using User = CentreT_TelegramBot.Entities.User;
 
 namespace CentreT_TelegramBot.Services;
 
@@ -101,7 +99,7 @@ public class BotCoreService : IBotCoreService
     // Ignore all commands
     [ExcludesAnyBackslashCommandFilter]
     [ExcludesCommandsFilter(
-        "привет", "информация", "профиль", "редактировать", "чат", "назад", "дальше", "подтверждаю", "подтвердить", "отправить"
+        "привет", "начать", "информация", "профиль", "редактировать", "чат", "назад", "дальше", "подтверждаю", "подтвердить", "отправить"
         )]
     [ChatTypeFilter(ChatType.Private)]
     protected async Task OnMessage(ITelegramBotClient c, Update u, CancellationToken t)
@@ -114,7 +112,7 @@ public class BotCoreService : IBotCoreService
     
     [UpdateHandler]
     [UpdateTypeFilter(UpdateType.Message)]
-    [IncludesCommandsFilter("/start", "привет")]
+    [IncludesCommandsFilter("/start", "привет", "начать")]
     [ChatTypeFilter(ChatType.Private)]
     protected async Task OnStartCommand(ITelegramBotClient c, Update u, CancellationToken t)
     {
@@ -209,7 +207,7 @@ public class BotCoreService : IBotCoreService
         return machine;
     }
 
-    internal StateMachineDefinition<UserState, UserEvent> CreateStateMachineDefinition()
+    private StateMachineDefinition<UserState, UserEvent> CreateStateMachineDefinition()
     {
         // ToDo Split into several methods
         

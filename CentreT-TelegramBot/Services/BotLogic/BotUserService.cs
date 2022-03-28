@@ -1,13 +1,13 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.Text;
+using System.Text.RegularExpressions;
 using Appccelerate.StateMachine;
 using Appccelerate.StateMachine.AsyncMachine;
 using Appccelerate.StateMachine.AsyncMachine.Events;
-using Appccelerate.StateMachine.AsyncMachine.Reports;
 using CentreT_TelegramBot.Attributes.Telegram.Bot;
 using CentreT_TelegramBot.Models.States;
 using CentreT_TelegramBot.Models.Configuration;
 using CentreT_TelegramBot.Extensions;
-using CentreT_TelegramBot.Repositories;
+using CentreT_TelegramBot.Models;
 using CentreT_TelegramBot.StateMachine;
 using Telegram.Bot;
 using Telegram.Bot.Exceptions;
@@ -19,37 +19,6 @@ namespace CentreT_TelegramBot.Services;
 
 public class BotCoreService : IBotCoreService
 {
-
-    internal class StateUpdate
-    {
-        public ITelegramBotClient BotClient { get; set; }
-        public Update BotUpdate { get; set; }
-        public CancellationToken CancellationToken { get; set; }
-        public object? Argument;
-        public string? ArgumentErrorMessage;
-
-        public long? UserId => BotUpdate?.Message?.From?.Id;
-        public long? ChatId => BotUpdate?.Message?.Chat.Id;
-        
-        public StateUpdate(ITelegramBotClient botClient, Update botUpdate, CancellationToken cancellationToken, object? argument = null)
-        {
-            BotClient = botClient;
-            BotUpdate = botUpdate;
-            CancellationToken = cancellationToken;
-            Argument = argument;
-            ArgumentErrorMessage = null;
-        }
-
-        public void Deconstruct(out ITelegramBotClient botClient, 
-            out long? chatId, out long? userId, 
-            out CancellationToken cancellationToken)
-        {
-            botClient = BotClient;
-            chatId = UserId;
-            userId = UserId;
-            cancellationToken = CancellationToken;
-        }
-    }
 
     private readonly StateMachineDefinition<UserState, UserEvent> _stateMachineDefinition;
 
@@ -476,6 +445,7 @@ public class BotCoreService : IBotCoreService
 
     private async Task<string> InterpolateMessage(StateUpdate update, string message)
     {
+        // ToDo make something more readable and modular
         var regex = new Regex(@"\{(\w+)\}");
         var (_, _, userId, token) = update;
 
@@ -502,12 +472,19 @@ public class BotCoreService : IBotCoreService
                     { "chatId", "(0_0)" },
                     { "chatName", "(0_0)" }
                 }
+            },
+            { "allChats",
+                new Dictionary<string, string>
+                {
+                    { "chats", "(0_0)" }
+                }
             }
         };
 
         // ToDo replace with regex somehow
         var flFetchUser = argumentGroups["user"].Any(x => message.Contains($"{{{x.Key}}}"));
         var flFetchActiveChat = argumentGroups["activeChat"].Any(x => message.Contains($"{{{x.Key}}}"));
+        var flFetchChats = argumentGroups["allChats"].Any(x => message.Contains($"{{{x.Key}}}"));
 
         if (flFetchUser)
         {
@@ -532,6 +509,18 @@ public class BotCoreService : IBotCoreService
                 if (activeJoinRequest.Chat != null)
                     argumentGroups["activeChat"]["chatName"] = activeJoinRequest.Chat.Name;
             }
+        }
+
+        if (flFetchChats)
+        {
+            var chats = await _repositoryService.GetAllChats();
+            var result = new StringBuilder();
+            foreach (var chat in chats)
+            {
+                result.AppendLine(chat.Name);
+            }
+
+            argumentGroups["allChats"]["chats"] = result.ToString();
         }
 
         var args = argumentGroups

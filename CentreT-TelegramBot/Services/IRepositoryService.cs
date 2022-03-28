@@ -6,6 +6,8 @@ public interface IRepositoryService
 {
     Task<Chat?> GetChat(string name);
 
+    Task<IQueryable<Chat>> GetAllChats();
+
     Task<UserJoinRequest?> GetActiveUserJoinRequest(long userId);
     
     Task<UserJoinRequest?> GetUserJoinRequestByChat(long chatId);

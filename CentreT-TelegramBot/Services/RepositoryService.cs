@@ -7,8 +7,6 @@ public class RepositoryService : IRepositoryService
 {
 
     private readonly IUserRepository _userRepository;
-    // private readonly IUserContextRepository _userContextRepository;
-    // private readonly IUserJoinContextRepository _userJoinContextRepository;
     private readonly IUserJoinRequestRepository _userJoinRequestRepository;
     private readonly IChatRepository _chatRepository;
     
@@ -24,6 +22,11 @@ public class RepositoryService : IRepositoryService
     {
         return await _chatRepository.GetFirst(x =>
             x.Name == name);
+    }
+
+    public async Task<IQueryable<Chat>> GetAllChats()
+    {
+        return await _chatRepository.All();
     }
 
     public async Task<UserJoinRequest?> GetActiveUserJoinRequest(long userId)

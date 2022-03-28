@@ -432,6 +432,7 @@ public class BotCoreService : IBotCoreService
 
         await update.BotClient.SendTextMessageAsync(update.ChatId!, 
             result,
+            replyToMessageId: update.BotUpdate.Message!.MessageId,
             cancellationToken: update.CancellationToken);
     }
     

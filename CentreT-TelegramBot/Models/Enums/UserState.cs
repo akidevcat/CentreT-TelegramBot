@@ -3,6 +3,6 @@
 public enum UserState
 {
     Entry, Start, 
-    Profile, ProfileGetName, ProfileGetPronouns, ProfileGetAge, ProfileGetLocation, ProfileConfirmation,
+    Profile, ProfileGetName, ProfileGetPronouns, ProfileGetAge, ProfileGetLocation,
     JoinConfirmation
 }

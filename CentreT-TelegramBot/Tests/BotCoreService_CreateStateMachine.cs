@@ -5,6 +5,7 @@ using Appccelerate.StateMachine.AsyncMachine.Reports;
 using CentreT_TelegramBot.Models.States;
 using CentreT_TelegramBot.Services;
 using CentreT_TelegramBot.StateMachine;
+using CentreT_TelegramBot.StateMachine.Reports;
 using NUnit.Framework;
 
 namespace CentreT_TelegramBot.Tests;
@@ -15,11 +16,13 @@ public class BotCoreService_CreateStateMachine
     [Test]
     public void CreateStateMachine()
     {
-        var filePath = $"{AppDomain.CurrentDomain.BaseDirectory}/{nameof(BotCoreService)}.graphml";
+        //var filePath = $"{AppDomain.CurrentDomain.BaseDirectory}/{nameof(BotCoreService)}.graphml";
+        var filePath = $"{AppDomain.CurrentDomain.BaseDirectory}/{nameof(BotCoreService)}.gv";
         var service = new BotCoreService(null!, null!, null!, null!);
         var machine = service.CreateStateMachine(UserState.Entry);
         using var sw = new StreamWriter(filePath);
-        machine.Report(new YEdStateMachineReportGenerator<UserState, UserEvent>(sw));
+        //machine.Report(new YEdStateMachineReportGenerator<UserState, UserEvent>(sw));
+        machine.Report(new DotStateMachineReportGenerator<UserState, UserEvent>(sw));
     }
 
     [Test]

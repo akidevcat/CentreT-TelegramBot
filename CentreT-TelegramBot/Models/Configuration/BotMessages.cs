@@ -20,7 +20,6 @@ public class BotMessages
     public string ProfileGetPronounsMessage = "82BDBA01-0B34-43F3-9E26-A9BD90C3F30D";
     public string ProfileGetAgeMessage = "0ECF9D00-BCC9-4082-92C4-165599D91CD9";
     public string ProfileGetLocationMessage = "4A8C530E-B628-4CE2-B4F1-EE327D7B8D6D";
-    public string ProfileGetConfirmationMessage = "1B86B1C8-87A9-4BFD-ADAF-575DDAF52156";
     public string JoinConfirmationMessage = "503870EC-C32E-4B04-BB0A-1FD66AB9CD0D";
     // Action messages
     public string InformationMessage = "596093EF-710C-4246-BAEC-723633B76C42";

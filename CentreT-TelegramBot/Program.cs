@@ -34,14 +34,28 @@ hostBuilder.ConfigureServices(services =>
     services.TryAddSingleton<ITelegramContext, TelegramContext>();
     
     // Add bot services
-    services.TryAddSingleton<BotCoreService>();
-    services.TryAddSingleton<IBotCoreService>(x => x.GetRequiredService<BotCoreService>()); // ToDo
+    services.AddSingletonMultiple<BotUserService>(
+        typeof(IBotUserService), 
+        typeof(IUpdateHandler), 
+        typeof(IErrorHandler));
+    services.AddSingletonMultiple<BotAdminService>(
+        typeof(IBotAdminService), 
+        typeof(IUpdateHandler), 
+        typeof(IErrorHandler));
+
+    // services.TryAddSingleton<BotUserService>();
+    // services.TryAddSingleton<BotAdminService>();
+    // services.TryAddSingleton<IBotUserService>(x => x.GetRequiredService<BotUserService>()); // ToDo
+    // services.TryAddSingleton<IBotAdminService>(x => x.GetRequiredService<BotAdminService>()); // ToDo
 
     // Register all Update and Error Handlers for Telegram.Bot
-    services.RegisterAllImplementationsOf<IUpdateHandler>(ServiceCollectionDescriptorExtensions.TryAddSingleton, 
-        typeof(IUpdateHandler).Assembly);
-    services.RegisterAllImplementationsOf<IErrorHandler>(ServiceCollectionDescriptorExtensions.TryAddSingleton, 
-        typeof(IErrorHandler).Assembly);
+    //services.TryAddSingletonMultiple<BotUserService>(IBotUserService, IUpdateHandler, IErrorHandler); //<Implementation>(Type[] types)
+    // services.AddSingleton(typeof(IUpdateHandler), x => x.GetRequiredService<BotUserService>());
+    // services.AddSingleton(typeof(IUpdateHandler), x => x.GetRequiredService<BotAdminService>());
+    // services.RegisterAllImplementationsOf<IUpdateHandler>(ServiceCollectionDescriptorExtensions.TryAddSingleton, 
+    //     typeof(IUpdateHandler).Assembly);
+    // services.RegisterAllImplementationsOf<IErrorHandler>(ServiceCollectionDescriptorExtensions.TryAddSingleton, 
+    //     typeof(IErrorHandler).Assembly);
 
     // Add hosted
     services.AddHostedService<Worker>();

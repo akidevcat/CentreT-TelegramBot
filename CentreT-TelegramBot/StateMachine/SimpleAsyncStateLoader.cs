@@ -1,42 +1,43 @@
 ﻿using Appccelerate.StateMachine;
 using Appccelerate.StateMachine.Infrastructure;
 using Appccelerate.StateMachine.Persistence;
-using CentreT_TelegramBot.Models.States;
 
 namespace CentreT_TelegramBot.StateMachine;
 
-public class SimpleAsyncStateLoader : IAsyncStateMachineLoader<UserState, UserEvent>
+public class SimpleAsyncStateLoader<TState, TEvent> : IAsyncStateMachineLoader<TState, TEvent> 
+    where TState : IComparable 
+    where TEvent : IComparable
 {
-    private readonly IInitializable<UserState> _stateToLoad;
+    private readonly IInitializable<TState> _stateToLoad;
 
-    public SimpleAsyncStateLoader(UserState stateToLoad)
+    public SimpleAsyncStateLoader(TState stateToLoad)
     {
-        _stateToLoad = Initializable<UserState>.Initialized(stateToLoad);
+        _stateToLoad = Initializable<TState>.Initialized(stateToLoad);
     }
 
-    public Task<IInitializable<UserState>> LoadCurrentState()
+    public Task<IInitializable<TState>> LoadCurrentState()
     {
         return Task.FromResult(_stateToLoad);
     }
 
-    public Task<IReadOnlyDictionary<UserState, UserState>> LoadHistoryStates()
+    public Task<IReadOnlyDictionary<TState, TState>> LoadHistoryStates()
     {
         // Do not load
-        IReadOnlyDictionary<UserState, UserState> result = new Dictionary<UserState, UserState>();
+        IReadOnlyDictionary<TState, TState> result = new Dictionary<TState, TState>();
         return Task.FromResult(result);
     }
 
-    public Task<IReadOnlyCollection<EventInformation<UserEvent>>> LoadEvents()
+    public Task<IReadOnlyCollection<EventInformation<TEvent>>> LoadEvents()
     {
         // Do not load
-        IReadOnlyCollection<EventInformation<UserEvent>> result = Array.Empty<EventInformation<UserEvent>>();
+        IReadOnlyCollection<EventInformation<TEvent>> result = Array.Empty<EventInformation<TEvent>>();
         return Task.FromResult(result);
     }
 
-    public Task<IReadOnlyCollection<EventInformation<UserEvent>>> LoadPriorityEvents()
+    public Task<IReadOnlyCollection<EventInformation<TEvent>>> LoadPriorityEvents()
     {
         // Do not load
-        IReadOnlyCollection<EventInformation<UserEvent>> result = Array.Empty<EventInformation<UserEvent>>();
+        IReadOnlyCollection<EventInformation<TEvent>> result = Array.Empty<EventInformation<TEvent>>();
         return Task.FromResult(result);
     }
 }

@@ -4,7 +4,7 @@ using Telegram.Bot.Types;
 
 namespace CentreT_TelegramBot.Services;
 
-public interface IBotCoreService : IUpdateHandler, IErrorHandler
+public interface IBotUserService : IUpdateHandler, IErrorHandler
 {
     Task RunAsync(CancellationToken cancellationToken);
 }

@@ -16,17 +16,17 @@ public class Worker : BackgroundService
     private readonly ILogger<Worker> _logger;
     private readonly IConfigurationService _configuration;
     private readonly ITelegramService _telegramService;
-    private readonly IBotCoreService _botCoreService;
+    private readonly IBotUserService _botUserService;
     private readonly BotDbContext _botDbContext;
 
     public Worker(ILogger<Worker> logger, IConfigurationService configuration, 
-        ITelegramService telegramService, IBotCoreService botCoreService,
+        ITelegramService telegramService, IBotUserService botUserService,
         BotDbContext dbContext)
     {
         _logger = logger;
         _configuration = configuration;
         _telegramService = telegramService;
-        _botCoreService = botCoreService;
+        _botUserService = botUserService;
         _botDbContext = dbContext;
     }
 
@@ -51,6 +51,6 @@ public class Worker : BackgroundService
         _telegramService.Run(botToken.Token, cancellationToken);
         
         // Run bot logic services
-        await _botCoreService.RunAsync(cancellationToken);
+        await _botUserService.RunAsync(cancellationToken);
     }
 }

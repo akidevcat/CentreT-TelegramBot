@@ -17,31 +17,42 @@ using Telegram.Bot.Types.ReplyMarkups;
 
 namespace CentreT_TelegramBot.Services;
 
-public class BotCoreService : IBotCoreService
+public class BotUserService : BotStateMachineService<UserState, UserEvent>, IBotUserService
 {
-
-    private readonly StateMachineDefinition<UserState, UserEvent> _stateMachineDefinition;
+    // private readonly StateMachineDefinition<UserState, UserEvent> _stateMachineDefinition;
 
     private readonly IRepositoryService _repositoryService;
     private readonly ITelegramContext _telegramContext;
     private readonly IConfigurationService _configurationService;
-    private readonly ILogger<BotCoreService> _logger;
+    private readonly ILogger<BotUserService> _logger;
     
-    public BotCoreService(IRepositoryService repositoryService, 
+    public BotUserService(IRepositoryService repositoryService, 
         ITelegramContext telegramContext, IConfigurationService configurationService, 
-        ILogger<BotCoreService> logger)
+        ILogger<BotUserService> logger)
     {
         _repositoryService = repositoryService;
         _telegramContext = telegramContext;
         _configurationService = configurationService;
         _logger = logger;
 
-        _stateMachineDefinition = CreateStateMachineDefinition();
+        var m = _configurationService?.GetConfigurationObject<BotMessages>()!;
+        
+        InitializeStateMachine(UserState.Entry,
+            b => AddEntryStateToMachine(b, m),
+            b => AddStartStateToMachine(b, m),
+            b => AddProfileStateToMachine(b, m),
+            b => AddProfileGetNameStateToMachine(b, m),
+            b => AddProfileGetPronounsStateToMachine(b, m),
+            b => AddProfileGetAgeStateToMachine(b, m),
+            b => AddProfileGetLocationStateToMachine(b, m),
+            b => AddJoinConfirmationStateToMachine(b, m),
+            b => b.AddStateSync<UserState, UserEvent, StateUpdate>(SyncUserState)
+        );
     }
     
-    public async Task RunAsync(CancellationToken cancellationToken)
+    public override Task RunAsync(CancellationToken cancellationToken)
     {
-        
+        return Task.CompletedTask;
     }
     
     [ErrorHandler]
@@ -58,7 +69,7 @@ public class BotCoreService : IBotCoreService
         return Task.CompletedTask;
     }
 
-    private void OnTransitionException(object? sender, TransitionExceptionEventArgs<UserState, UserEvent> args)
+    protected override void OnTransitionException(object? sender, TransitionExceptionEventArgs<UserState, UserEvent> args)
     {
         _logger.LogError("Exception thrown: {Exception}", args.Exception.ToString());
     }
@@ -163,44 +174,8 @@ public class BotCoreService : IBotCoreService
         await machine.Fire(userEvent, stateUpdate);
     }
 
-    internal AsyncPassiveStateMachine<UserState, UserEvent> CreateStateMachine(UserState state, string name = nameof(BotCoreService))
-    {
-        var machine = _stateMachineDefinition.CreatePassiveStateMachine(name);
-        
-        machine.TransitionExceptionThrown += OnTransitionException;
-        machine.TransitionDeclined += OnTransitionDeclined;
-
-        machine.Load(new SimpleAsyncStateLoader(state));
-        machine.Start();
-
-        return machine;
-    }
-
     #region StateMachineDefinition
     
-    private StateMachineDefinition<UserState, UserEvent> CreateStateMachineDefinition()
-    {
-        var m = _configurationService?.GetConfigurationObject<BotMessages>()!;
-        var builder = new StateMachineDefinitionBuilder<UserState, UserEvent>();
-
-        // Add all states
-        AddEntryStateToMachine(builder, m);
-        AddStartStateToMachine(builder, m);
-        AddProfileStateToMachine(builder, m);
-        AddProfileGetNameStateToMachine(builder, m);
-        AddProfileGetPronounsStateToMachine(builder, m);
-        AddProfileGetAgeStateToMachine(builder, m);
-        AddProfileGetLocationStateToMachine(builder, m);
-        AddJoinConfirmationStateToMachine(builder, m);
-
-        // Add state sync
-        builder.AddStateSync<UserState, UserEvent, StateUpdate>(SyncUserState);
-
-        builder.WithInitialState(UserState.Entry);
-
-        return builder.Build();
-    }
-
     private void AddEntryStateToMachine(StateMachineDefinitionBuilder<UserState, UserEvent> builder, BotMessages m)
     {
         // Entry -> ProfileGetName
@@ -394,7 +369,7 @@ public class BotCoreService : IBotCoreService
     
     #region StateMachineActions
 
-    private void OnTransitionDeclined(object? sender, TransitionEventArgs<UserState, UserEvent> e)
+    protected override void OnTransitionDeclined(object? sender, TransitionEventArgs<UserState, UserEvent> e)
     {
         var botMessages = _configurationService.GetConfigurationObject<BotMessages>();
         var update = (StateUpdate)e.EventArgument;

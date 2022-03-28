@@ -470,6 +470,7 @@ public class BotCoreService : IBotCoreService
         await update.BotClient.SendTextMessageAsync(update.ChatId!, 
             result,
             replyMarkup: markup,
+            replyToMessageId: update.BotUpdate.Message!.MessageId,
             cancellationToken: update.CancellationToken);
     }
 
@@ -746,8 +747,4 @@ public class BotCoreService : IBotCoreService
         user.State = state;
         await _repositoryService.SaveChanges();
     }
-    
-    #region Mappers
-
-    #endregion
 }

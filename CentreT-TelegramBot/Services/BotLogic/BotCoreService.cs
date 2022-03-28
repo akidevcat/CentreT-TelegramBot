@@ -207,25 +207,42 @@ public class BotCoreService : IBotCoreService
         return machine;
     }
 
+    #region StateMachineDefinition
+    
     private StateMachineDefinition<UserState, UserEvent> CreateStateMachineDefinition()
     {
-        // ToDo Split into several methods
-        
         var m = _configurationService?.GetConfigurationObject<BotMessages>()!;
         var builder = new StateMachineDefinitionBuilder<UserState, UserEvent>();
 
-        #region Entry
-        
+        // Add all states
+        AddEntryStateToMachine(builder, m);
+        AddStartStateToMachine(builder, m);
+        AddProfileStateToMachine(builder, m);
+        AddProfileGetNameStateToMachine(builder, m);
+        AddProfileGetPronounsStateToMachine(builder, m);
+        AddProfileGetAgeStateToMachine(builder, m);
+        AddProfileGetLocationStateToMachine(builder, m);
+        AddJoinConfirmationStateToMachine(builder, m);
+
+        // Add state sync
+        builder.AddStateSync<UserState, UserEvent, StateUpdate>(SyncUserState);
+
+        builder.WithInitialState(UserState.Entry);
+
+        return builder.Build();
+    }
+
+    private void AddEntryStateToMachine(StateMachineDefinitionBuilder<UserState, UserEvent> builder, BotMessages m)
+    {
         // Entry -> ProfileGetName
         builder.In(UserState.Entry)
             .On(UserEvent.StartCommand)
             .Goto(UserState.ProfileGetName)
             .Execute<StateUpdate>(u => ReplyUser(u, m.EntryMessage));
-
-        #endregion
-
-        #region Start
-        
+    }
+    
+    private void AddStartStateToMachine(StateMachineDefinitionBuilder<UserState, UserEvent> builder, BotMessages m)
+    {
         // -> Start
         builder.In(UserState.Start)
             .ExecuteOnEntry<StateUpdate>(u => 
@@ -242,16 +259,15 @@ public class BotCoreService : IBotCoreService
         builder.In(UserState.Start)
             .On(UserEvent.JoinCommand)
             .If<StateUpdate>(u => UserJoinRequestsIsInLimit(u, 5))
-                .Goto(UserState.JoinConfirmation)
-                .Execute<StateUpdate>(CreateUserJoinRequest)
-                .Execute<StateUpdate>(u => ReplyUser(u, m.JoinRequestCreated))
+            .Goto(UserState.JoinConfirmation)
+            .Execute<StateUpdate>(CreateUserJoinRequest)
+            .Execute<StateUpdate>(u => ReplyUser(u, m.JoinRequestCreated))
             .Otherwise()
-                .Execute<StateUpdate>(u => ReplyUser(u, m.JoinRequestLimitReached));
+            .Execute<StateUpdate>(u => ReplyUser(u, m.JoinRequestLimitReached));
+    }
 
-        #endregion
-        
-        #region Profile
-        
+    private void AddProfileStateToMachine(StateMachineDefinitionBuilder<UserState, UserEvent> builder, BotMessages m)
+    {
         // -> Profile
         builder.In(UserState.Profile)
             .ExecuteOnEntry<StateUpdate>(u => 
@@ -264,11 +280,11 @@ public class BotCoreService : IBotCoreService
         builder.In(UserState.Profile)
             .On(UserEvent.EditCommand)
             .Goto(UserState.ProfileGetName);
-        
-        #endregion
+    }
 
-        #region ProfileGetName
-        
+    private void AddProfileGetNameStateToMachine(StateMachineDefinitionBuilder<UserState, UserEvent> builder,
+        BotMessages m)
+    {
         // -> ProfileGetName
         builder.In(UserState.ProfileGetName)
             .ExecuteOnEntry<StateUpdate>(u => ReplyUserWithButtons(u, m.ProfileGetNameMessage));
@@ -276,27 +292,27 @@ public class BotCoreService : IBotCoreService
         builder.In(UserState.ProfileGetName)
             .On(UserEvent.BackCommand)
             .If<StateUpdate>(UserIsCompleted)
-                .Goto(UserState.Profile);
+            .Goto(UserState.Profile);
         // ProfileGetName -> ProfileGetPronouns [/next]
         builder.In(UserState.ProfileGetName)
             .On(UserEvent.NextCommand)
             .If<StateUpdate>(u => UserPropertyNotNull(u, UserProperty.Name))
-                .Goto(UserState.ProfileGetPronouns)
+            .Goto(UserState.ProfileGetPronouns)
             .Otherwise()
-                .Execute<StateUpdate>(u => ReplyUser(u, m.InvalidAction));
+            .Execute<StateUpdate>(u => ReplyUser(u, m.InvalidAction));
         // ProfileGetName -> ProfileGetPronouns
         builder.In(UserState.ProfileGetName)
             .On(UserEvent.ArgumentFilled)
             .If<StateUpdate>(ArgumentAsUserNameIsValid)
-                .Goto(UserState.ProfileGetPronouns)
-                .Execute<StateUpdate>(u => SaveUserPropertyFromArgument(u, UserProperty.Name))
+            .Goto(UserState.ProfileGetPronouns)
+            .Execute<StateUpdate>(u => SaveUserPropertyFromArgument(u, UserProperty.Name))
             .Otherwise()
-                .Execute<StateUpdate>(u => ReplyUser(u, u.ArgumentErrorMessage!));
-        
-        #endregion
-        
-        #region ProfileGetPronouns
-        
+            .Execute<StateUpdate>(u => ReplyUser(u, u.ArgumentErrorMessage!));
+    }
+    
+    private void AddProfileGetPronounsStateToMachine(StateMachineDefinitionBuilder<UserState, UserEvent> builder,
+        BotMessages m)
+    {
         // -> ProfileGetPronouns
         builder.In(UserState.ProfileGetPronouns)
             .ExecuteOnEntry<StateUpdate>(u => ReplyUserWithButtons(u, m.ProfileGetPronounsMessage));
@@ -308,22 +324,22 @@ public class BotCoreService : IBotCoreService
         builder.In(UserState.ProfileGetPronouns)
             .On(UserEvent.NextCommand)
             .If<StateUpdate>(u => UserPropertyNotNull(u, UserProperty.Pronouns))
-                .Goto(UserState.ProfileGetAge)
+            .Goto(UserState.ProfileGetAge)
             .Otherwise()
-                .Execute<StateUpdate>(u => ReplyUser(u, m.InvalidAction));
+            .Execute<StateUpdate>(u => ReplyUser(u, m.InvalidAction));
         // ProfileGetName -> ProfileGetPronouns
         builder.In(UserState.ProfileGetPronouns)
             .On(UserEvent.ArgumentFilled)
             .If<StateUpdate>(ArgumentAsUserPronounsIsValid)
-                .Goto(UserState.ProfileGetAge)
-                .Execute<StateUpdate>(u => SaveUserPropertyFromArgument(u, UserProperty.Pronouns))
+            .Goto(UserState.ProfileGetAge)
+            .Execute<StateUpdate>(u => SaveUserPropertyFromArgument(u, UserProperty.Pronouns))
             .Otherwise()
-                .Execute<StateUpdate>(u => ReplyUser(u, u.ArgumentErrorMessage!));
-        
-        #endregion
-        
-        #region ProfileGetAge
-        
+            .Execute<StateUpdate>(u => ReplyUser(u, u.ArgumentErrorMessage!));
+    }
+    
+    private void AddProfileGetAgeStateToMachine(StateMachineDefinitionBuilder<UserState, UserEvent> builder,
+        BotMessages m)
+    {
         // -> ProfileGetAge
         builder.In(UserState.ProfileGetAge)
             .ExecuteOnEntry<StateUpdate>(u => ReplyUserWithButtons(u, m.ProfileGetAgeMessage));
@@ -335,22 +351,22 @@ public class BotCoreService : IBotCoreService
         builder.In(UserState.ProfileGetAge)
             .On(UserEvent.NextCommand)
             .If<StateUpdate>(u => UserPropertyNotNull(u, UserProperty.Age))
-                .Goto(UserState.ProfileGetLocation)
+            .Goto(UserState.ProfileGetLocation)
             .Otherwise()
-                .Execute<StateUpdate>(u => ReplyUser(u, m.InvalidAction));
+            .Execute<StateUpdate>(u => ReplyUser(u, m.InvalidAction));
         // ProfileGetAge -> ProfileGetLocation
         builder.In(UserState.ProfileGetAge)
             .On(UserEvent.ArgumentFilled)
             .If<StateUpdate>(ArgumentAsUserAgeIsValid)
-                .Goto(UserState.ProfileGetLocation)
-                .Execute<StateUpdate>(u => SaveUserPropertyFromArgument(u, UserProperty.Age))
+            .Goto(UserState.ProfileGetLocation)
+            .Execute<StateUpdate>(u => SaveUserPropertyFromArgument(u, UserProperty.Age))
             .Otherwise()
-                .Execute<StateUpdate>(u => ReplyUser(u, u.ArgumentErrorMessage!));
-        
-        #endregion
-        
-        #region ProfileGetLocation
-        
+            .Execute<StateUpdate>(u => ReplyUser(u, u.ArgumentErrorMessage!));
+    }
+    
+    private void AddProfileGetLocationStateToMachine(StateMachineDefinitionBuilder<UserState, UserEvent> builder,
+        BotMessages m)
+    {
         // -> ProfileGetLocation
         builder.In(UserState.ProfileGetLocation)
             .ExecuteOnEntry<StateUpdate>(u => ReplyUserWithButtons(u, m.ProfileGetLocationMessage));
@@ -362,22 +378,22 @@ public class BotCoreService : IBotCoreService
         builder.In(UserState.ProfileGetLocation)
             .On(UserEvent.NextCommand)
             .If<StateUpdate>(u => UserPropertyNotNull(u, UserProperty.Location))
-                .Goto(UserState.Profile)
+            .Goto(UserState.Profile)
             .Otherwise()
-                .Execute<StateUpdate>(u => ReplyUser(u, m.InvalidAction));
+            .Execute<StateUpdate>(u => ReplyUser(u, m.InvalidAction));
         // ProfileGetLocation -> Profile
         builder.In(UserState.ProfileGetLocation)
             .On(UserEvent.ArgumentFilled)
             .If<StateUpdate>(ArgumentAsUserLocationIsValid)
-                .Goto(UserState.Profile)
-                .Execute<StateUpdate>(u => SaveUserPropertyFromArgument(u, UserProperty.Location))
+            .Goto(UserState.Profile)
+            .Execute<StateUpdate>(u => SaveUserPropertyFromArgument(u, UserProperty.Location))
             .Otherwise()
-                .Execute<StateUpdate>(u => ReplyUser(u, u.ArgumentErrorMessage!));
-        
-        #endregion
-        
-        #region JoinConfirmation
-        
+            .Execute<StateUpdate>(u => ReplyUser(u, u.ArgumentErrorMessage!));
+    }
+    
+    private void AddJoinConfirmationStateToMachine(StateMachineDefinitionBuilder<UserState, UserEvent> builder,
+        BotMessages m)
+    {
         // -> JoinConfirmation
         builder.In(UserState.JoinConfirmation)
             .ExecuteOnEntry<StateUpdate>(u => ReplyUserWithButtons(u, m.JoinConfirmationMessage));
@@ -385,9 +401,9 @@ public class BotCoreService : IBotCoreService
         builder.In(UserState.JoinConfirmation)
             .On(UserEvent.ArgumentFilled)
             .If<StateUpdate>(SaveJoinRequestChatFromArgument)
-                .Goto(UserState.JoinConfirmation)
+            .Goto(UserState.JoinConfirmation)
             .Otherwise()
-                .Execute<StateUpdate>(u => ReplyUser(u, u.ArgumentErrorMessage!));
+            .Execute<StateUpdate>(u => ReplyUser(u, u.ArgumentErrorMessage!));
         // JoinConfirmation -> Start [/back]
         builder.In(UserState.JoinConfirmation)
             .On(UserEvent.BackCommand)
@@ -398,21 +414,14 @@ public class BotCoreService : IBotCoreService
         builder.In(UserState.JoinConfirmation)
             .On(UserEvent.ConfirmCommand)
             .If<StateUpdate>(UserActiveJoinRequestIsCompleted)
-                .Goto(UserState.Start)
-                .Execute<StateUpdate>(SendUserJoinRequest)
-                .Execute<StateUpdate>(u => ReplyUser(u, m.JoinRequestSent))
+            .Goto(UserState.Start)
+            .Execute<StateUpdate>(SendUserJoinRequest)
+            .Execute<StateUpdate>(u => ReplyUser(u, m.JoinRequestSent))
             .Otherwise()
-                .Execute<StateUpdate>(u => ReplyUser(u, m.InvalidAction));
-        
-        #endregion
-        
-        // Add state sync
-        builder.AddStateSync<UserState, UserEvent, StateUpdate>(SyncUserState);
-
-        builder.WithInitialState(UserState.Entry);
-
-        return builder.Build();
+            .Execute<StateUpdate>(u => ReplyUser(u, m.InvalidAction));
     }
+
+    #endregion
     
     #region StateMachineActions
 

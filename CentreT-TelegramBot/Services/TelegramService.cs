@@ -70,6 +70,7 @@ public class TelegramService : ITelegramService
                     IncludesCommandsFilterAttribute a => !update.StartsWithCommands(a.Commands),
                     ExcludesCommandsFilterAttribute a => !(update.StartsWithCommands(a.Commands) ^ true),
                     ExcludesAnyBackslashCommandFilterAttribute => update.StartsWithBackslash(),
+                    HasArgumentsFilterAttribute a => !update.HasSeveralArguments(a.ArgumentCount),
                     FromNotNullFilterAttribute => update.IsMessageFromNull(),
                     FromBotFilterAttribute a => a.ShouldBeBot != update.IsMessageFromBot(),
                     _ => false // Skip general attributes

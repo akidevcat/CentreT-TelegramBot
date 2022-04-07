@@ -17,8 +17,8 @@ public class BotCoreService_CreateStateMachine
     public void CreateStateMachine()
     {
         //var filePath = $"{AppDomain.CurrentDomain.BaseDirectory}/{nameof(BotCoreService)}.graphml";
-        var filePath = $"{AppDomain.CurrentDomain.BaseDirectory}/{nameof(BotUserService)}.gv";
-        var service = new BotUserService(null!, null!, null!, null!);
+        var filePath = $"{AppDomain.CurrentDomain.BaseDirectory}/{nameof(BotMenuService)}.gv";
+        var service = new BotMenuService(null!, null!, null!, null!);
         var machine = service.CreateStateMachine(UserState.Entry);
         using var sw = new StreamWriter(filePath);
         //machine.Report(new YEdStateMachineReportGenerator<UserState, UserEvent>(sw));

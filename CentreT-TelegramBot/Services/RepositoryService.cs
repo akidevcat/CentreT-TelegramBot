@@ -18,10 +18,51 @@ public class RepositoryService : IRepositoryService
         _chatRepository = chatRepository;
     }
 
+    public async Task<Chat?> GetChat(long id)
+    {
+        return await _chatRepository.GetFirst(x =>
+            x.Id == id);
+    }
+    
     public async Task<Chat?> GetChat(string name)
     {
         return await _chatRepository.GetFirst(x =>
             x.Name == name);
+    }
+
+    public async Task<Chat?> CreateChat(Chat chat)
+    {
+        var result = await GetChat(chat.Id);
+        if (result == null)
+        {
+            return await _chatRepository.Create(chat);
+        }
+
+        return null;
+    }
+
+    public async Task<bool> DeleteChat(Chat chat)
+    {
+        var result = await GetChat(chat.Id);
+        if (result != null)
+        {
+            await _chatRepository.Delete(result);
+            return true;
+        }
+
+        return false;
+    }
+    
+    public async Task<bool> DeleteChat(long id)
+    {
+        var result = await GetChat(id);
+        if (result != null)
+        {
+            await _chatRepository.Delete(result);
+            return true;
+        }
+
+        return false;
     }
 
     public async Task<IQueryable<Chat>> GetAllChats()

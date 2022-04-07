@@ -1,6 +1,6 @@
 ﻿namespace CentreT_TelegramBot.Services;
 
-public interface IBotAdminService
+public interface IBotGroupService
 {
     Task RunAsync(CancellationToken cancellationToken);
 }

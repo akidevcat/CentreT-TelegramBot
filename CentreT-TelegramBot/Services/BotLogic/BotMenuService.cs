@@ -17,18 +17,16 @@ using Telegram.Bot.Types.ReplyMarkups;
 
 namespace CentreT_TelegramBot.Services;
 
-public class BotUserService : BotStateMachineService<UserState, UserEvent>, IBotUserService
+public class BotMenuService : BotStateMachineService<UserState, UserEvent>, IBotMenuService
 {
-    // private readonly StateMachineDefinition<UserState, UserEvent> _stateMachineDefinition;
-
     private readonly IRepositoryService _repositoryService;
     private readonly ITelegramContext _telegramContext;
     private readonly IConfigurationService _configurationService;
-    private readonly ILogger<BotUserService> _logger;
+    private readonly ILogger<BotMenuService> _logger;
     
-    public BotUserService(IRepositoryService repositoryService, 
+    public BotMenuService(IRepositoryService repositoryService, 
         ITelegramContext telegramContext, IConfigurationService configurationService, 
-        ILogger<BotUserService> logger)
+        ILogger<BotMenuService> logger)
     {
         _repositoryService = repositoryService;
         _telegramContext = telegramContext;
@@ -37,7 +35,7 @@ public class BotUserService : BotStateMachineService<UserState, UserEvent>, IBot
 
         var m = _configurationService?.GetConfigurationObject<BotMessages>()!;
         
-        InitializeStateMachine(UserState.Entry,
+        BuildMachine(UserState.Entry,
             b => AddEntryStateToMachine(b, m),
             b => AddStartStateToMachine(b, m),
             b => AddProfileStateToMachine(b, m),
@@ -74,6 +72,8 @@ public class BotUserService : BotStateMachineService<UserState, UserEvent>, IBot
         _logger.LogError("Exception thrown: {Exception}", args.Exception.ToString());
     }
     
+    #region Commands
+    
     [UpdateHandler]
     [UpdateTypeFilter(UpdateType.Message)]
     // Ignore all commands
@@ -89,7 +89,7 @@ public class BotUserService : BotStateMachineService<UserState, UserEvent>, IBot
         
         await EvaluateMachineAction(c, u, t, UserEvent.ArgumentFilled, u.Message.Text);
     }
-    
+
     [UpdateHandler]
     [UpdateTypeFilter(UpdateType.Message)]
     [IncludesCommandsFilter("/start", "привет", "начать")]
@@ -162,6 +162,8 @@ public class BotUserService : BotStateMachineService<UserState, UserEvent>, IBot
         await EvaluateMachineAction(c, u, t, UserEvent.ConfirmCommand);
     }
     
+    #endregion
+
     private async Task EvaluateMachineAction(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken, 
         UserEvent userEvent, object? argument = null)
     {
@@ -174,7 +176,7 @@ public class BotUserService : BotStateMachineService<UserState, UserEvent>, IBot
         await machine.Fire(userEvent, stateUpdate);
     }
 
-    #region StateMachineDefinition
+    #region User StateMachine Definition
     
     private void AddEntryStateToMachine(StateMachineDefinitionBuilder<UserState, UserEvent> builder, BotMessages m)
     {
@@ -190,7 +192,7 @@ public class BotUserService : BotStateMachineService<UserState, UserEvent>, IBot
         // -> Start
         builder.In(UserState.Start)
             .ExecuteOnEntry<StateUpdate>(u => 
-                ReplyUserWithButtons(u, m.StartMessage, "Информация 📜", "Профиль 👤", "Чат 😸"));
+                ReplyUser(u, m.StartMessage, buttons: new [] { "Информация 📜", "Профиль 👤", "Чат 😸" }));
         // Start -> Start [/info]
         builder.In(UserState.Start)
             .On(UserEvent.InformationCommand)
@@ -215,7 +217,7 @@ public class BotUserService : BotStateMachineService<UserState, UserEvent>, IBot
         // -> Profile
         builder.In(UserState.Profile)
             .ExecuteOnEntry<StateUpdate>(u => 
-                ReplyUserWithButtons(u, m.ProfileMessage, "Назад ↩", "Редактировать 👤"));
+                ReplyUser(u, m.ProfileMessage, buttons: new[] { "Назад ↩", "Редактировать 👤" }));
         // Profile -> Start [/back]
         builder.In(UserState.Profile)
             .On(UserEvent.BackCommand)
@@ -231,7 +233,7 @@ public class BotUserService : BotStateMachineService<UserState, UserEvent>, IBot
     {
         // -> ProfileGetName
         builder.In(UserState.ProfileGetName)
-            .ExecuteOnEntry<StateUpdate>(u => ReplyUserWithButtons(u, m.ProfileGetNameMessage));
+            .ExecuteOnEntry<StateUpdate>(u => ReplyUser(u, m.ProfileGetNameMessage, buttons: Array.Empty<string>()));
         // ProfileGetName -> Profile [/back]
         builder.In(UserState.ProfileGetName)
             .On(UserEvent.BackCommand)
@@ -259,7 +261,7 @@ public class BotUserService : BotStateMachineService<UserState, UserEvent>, IBot
     {
         // -> ProfileGetPronouns
         builder.In(UserState.ProfileGetPronouns)
-            .ExecuteOnEntry<StateUpdate>(u => ReplyUserWithButtons(u, m.ProfileGetPronounsMessage));
+            .ExecuteOnEntry<StateUpdate>(u => ReplyUser(u, m.ProfileGetPronounsMessage, buttons: Array.Empty<string>()));
         // ProfileGetPronouns -> ProfileGetName [/back]
         builder.In(UserState.ProfileGetPronouns)
             .On(UserEvent.BackCommand)
@@ -286,7 +288,7 @@ public class BotUserService : BotStateMachineService<UserState, UserEvent>, IBot
     {
         // -> ProfileGetAge
         builder.In(UserState.ProfileGetAge)
-            .ExecuteOnEntry<StateUpdate>(u => ReplyUserWithButtons(u, m.ProfileGetAgeMessage));
+            .ExecuteOnEntry<StateUpdate>(u => ReplyUser(u, m.ProfileGetAgeMessage, buttons: Array.Empty<string>()));
         // ProfileGetAge -> ProfileGetPronouns [/back]
         builder.In(UserState.ProfileGetAge)
             .On(UserEvent.BackCommand)
@@ -313,7 +315,7 @@ public class BotUserService : BotStateMachineService<UserState, UserEvent>, IBot
     {
         // -> ProfileGetLocation
         builder.In(UserState.ProfileGetLocation)
-            .ExecuteOnEntry<StateUpdate>(u => ReplyUserWithButtons(u, m.ProfileGetLocationMessage));
+            .ExecuteOnEntry<StateUpdate>(u => ReplyUser(u, m.ProfileGetLocationMessage, buttons: Array.Empty<string>()));
         // ProfileGetLocation -> ProfileGetAge [/back]
         builder.In(UserState.ProfileGetLocation)
             .On(UserEvent.BackCommand)
@@ -340,7 +342,7 @@ public class BotUserService : BotStateMachineService<UserState, UserEvent>, IBot
     {
         // -> JoinConfirmation
         builder.In(UserState.JoinConfirmation)
-            .ExecuteOnEntry<StateUpdate>(u => ReplyUserWithButtons(u, m.JoinConfirmationMessage));
+            .ExecuteOnEntry<StateUpdate>(u => ReplyUser(u, m.JoinConfirmationMessage, buttons: Array.Empty<string>()));
         // JoinConfirmation -> JoinConfirmation
         builder.In(UserState.JoinConfirmation)
             .On(UserEvent.ArgumentFilled)
@@ -366,8 +368,8 @@ public class BotUserService : BotStateMachineService<UserState, UserEvent>, IBot
     }
 
     #endregion
-    
-    #region StateMachineActions
+
+    #region Actions / Guards
 
     protected override void OnTransitionDeclined(object? sender, TransitionEventArgs<UserState, UserEvent> e)
     {
@@ -379,44 +381,7 @@ public class BotUserService : BotStateMachineService<UserState, UserEvent>, IBot
             cancellationToken: update.CancellationToken);
     }
 
-    private async Task ReplyUser(StateUpdate update, string message)
-    {
-        var result = await InterpolateMessage(update, message);
-
-        await update.BotClient.SendTextMessageAsync(update.ChatId!, 
-            result,
-            replyToMessageId: update.BotUpdate.Message!.MessageId,
-            cancellationToken: update.CancellationToken);
-    }
     
-    /// <summary>
-    /// Replies to user with specified button titles. If buttons are empty, removes keyboard.
-    /// </summary>
-    private async Task ReplyUserWithButtons(StateUpdate update, string message, params string[] buttons)
-    {
-        ReplyMarkupBase markup;
-
-        if (buttons.Length == 0)
-        {
-            markup = new ReplyKeyboardRemove();
-        }
-        else
-        {
-            markup = new ReplyKeyboardMarkup(buttons.Select(x => new KeyboardButton(x)))
-            {
-                ResizeKeyboard = true,
-                OneTimeKeyboard = false
-            };
-        }
-        
-        var result = await InterpolateMessage(update, message);
-
-        await update.BotClient.SendTextMessageAsync(update.ChatId!, 
-            result,
-            replyMarkup: markup,
-            replyToMessageId: update.BotUpdate.Message!.MessageId,
-            cancellationToken: update.CancellationToken);
-    }
 
     private async Task<string> InterpolateMessage(StateUpdate update, string message)
     {

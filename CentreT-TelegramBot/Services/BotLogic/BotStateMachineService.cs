@@ -6,7 +6,7 @@ using CentreT_TelegramBot.StateMachine;
 
 namespace CentreT_TelegramBot.Services;
 
-public class BotStateMachineService<TState, TEvent> : BotGenericService, IBotStateMachineService
+public abstract class BotStateMachineService<TState, TEvent> : BotGenericService
     where TState : Enum
     where TEvent : Enum
 {
@@ -40,7 +40,7 @@ public class BotStateMachineService<TState, TEvent> : BotGenericService, IBotSta
         return machine;
     }
     
-    protected void InitializeStateMachine(TState initialState, params Action<StateMachineDefinitionBuilder<TState, TEvent>>[] stateInitializers)
+    protected void BuildMachine(TState initialState, params Action<StateMachineDefinitionBuilder<TState, TEvent>>[] stateInitializers)
     {
         var builder = new StateMachineDefinitionBuilder<TState, TEvent>();
 

@@ -13,5 +13,11 @@ public class Chat
     public long Id { get; set; }
     [MaxLength(30)]
     [DatabaseGenerated(DatabaseGeneratedOption.None)]
-    public string Name { get; set; } = null!;
+    public string Name { get; set; }
+
+    public Chat(long id, string name)
+    {
+        Id = id;
+        Name = name;
+    }
 }

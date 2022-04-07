@@ -1,4 +1,3 @@
-using System.Reflection;
 using CentreT_TelegramBot;
 using CentreT_TelegramBot.Extensions;
 using CentreT_TelegramBot.Models.Configuration;
@@ -24,8 +23,6 @@ hostBuilder.ConfigureServices(services =>
     services.AddDbContext<BotDbContext>(options => options.UseSqlServer(dbConnection.ConnectionString), ServiceLifetime.Singleton);
     services.TryAddSingleton<IUserRepository, UserRepository>();
     services.TryAddSingleton<IChatRepository, ChatRepository>();
-    // services.TryAddSingleton<IUserContextRepository, UserContextRepository>();
-    // services.TryAddSingleton<IUserJoinContextRepository, UserJoinContextRepository>();
     services.TryAddSingleton<IUserJoinRequestRepository, UserJoinRequestRepository>();
     services.TryAddSingleton<IRepositoryService, RepositoryService>();
     
@@ -34,28 +31,14 @@ hostBuilder.ConfigureServices(services =>
     services.TryAddSingleton<ITelegramContext, TelegramContext>();
     
     // Add bot services
-    services.AddSingletonMultiple<BotUserService>(
-        typeof(IBotUserService), 
+    services.AddSingletonMultiple<BotMenuService>(
+        typeof(IBotMenuService), 
         typeof(IUpdateHandler), 
         typeof(IErrorHandler));
-    services.AddSingletonMultiple<BotAdminService>(
-        typeof(IBotAdminService), 
+    services.AddSingletonMultiple<BotGroupService>(
+        typeof(IBotGroupService), 
         typeof(IUpdateHandler), 
         typeof(IErrorHandler));
-
-    // services.TryAddSingleton<BotUserService>();
-    // services.TryAddSingleton<BotAdminService>();
-    // services.TryAddSingleton<IBotUserService>(x => x.GetRequiredService<BotUserService>()); // ToDo
-    // services.TryAddSingleton<IBotAdminService>(x => x.GetRequiredService<BotAdminService>()); // ToDo
-
-    // Register all Update and Error Handlers for Telegram.Bot
-    //services.TryAddSingletonMultiple<BotUserService>(IBotUserService, IUpdateHandler, IErrorHandler); //<Implementation>(Type[] types)
-    // services.AddSingleton(typeof(IUpdateHandler), x => x.GetRequiredService<BotUserService>());
-    // services.AddSingleton(typeof(IUpdateHandler), x => x.GetRequiredService<BotAdminService>());
-    // services.RegisterAllImplementationsOf<IUpdateHandler>(ServiceCollectionDescriptorExtensions.TryAddSingleton, 
-    //     typeof(IUpdateHandler).Assembly);
-    // services.RegisterAllImplementationsOf<IErrorHandler>(ServiceCollectionDescriptorExtensions.TryAddSingleton, 
-    //     typeof(IErrorHandler).Assembly);
 
     // Add hosted
     services.AddHostedService<Worker>();

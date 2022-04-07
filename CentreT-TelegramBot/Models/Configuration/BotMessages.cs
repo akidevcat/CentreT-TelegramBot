@@ -34,4 +34,10 @@ public class BotMessages
     public string JoinRequestAlreadyExists = "47748A2D-66D6-4237-870F-E3E4610AA132";
     public string JoinRequestLimitReached = "20CB3943-758C-4882-AE51-F3EA9186E048";
     public string ShouldNotBeEmpty = "D821DF94-25D4-4E2C-BD71-A1BE8500B283";
+    public string NotEnoughPermissions = "62C0E3A8-7266-46D0-BD99-D74689CF5439";
+    // Admin messages
+    public string ChatRegistrationCompleted = "32051CCC-5E7A-4323-A8A4-1EB081136290";
+    public string ChatRegistrationFailed = "7E748719-4C44-4F7D-A401-B3DBAB004D4E";
+    public string ChatUnregistrationCompleted = "C0F75718-66C1-43DC-86B0-C2108614F6BC";
+    public string ChatUnregistrationFailed = "EFF57D66-988F-4C92-B1B8-4E7F1C1C50EE";
 }

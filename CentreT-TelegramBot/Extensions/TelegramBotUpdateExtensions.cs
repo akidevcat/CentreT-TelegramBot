@@ -59,6 +59,17 @@ public static class TelegramBotUpdateExtensions
         return firstArg.StartsWith("/");
     }
 
+    public static bool HasSeveralArguments(this Update update, int argumentCount)
+    {
+        if (!IsOfType(update, UpdateType.Message))
+        {
+            return false;
+        }
+
+        var textArgumentCount = update.Message?.Text?.Split(" ").Length;
+        return argumentCount + 1 == textArgumentCount;
+    }
+
     public static bool IsMessageFromNull(this Update update) =>
         IsOfType(update, UpdateType.Message) && update.Message!.From == null;
     

@@ -7,22 +7,22 @@ namespace CentreT_TelegramBot.Repositories.Infrastructure;
 public abstract class GenericRepository<T> : IGenericRepository<T> where T : class
 {
 
-    private readonly DbContext _dbContext;
-    private readonly DbSet<T> _dbSet;
+    protected readonly DbSet<T> DbSet;
+    protected readonly DbContext DbContext;
 
     /// <summary>
     /// Constructor
     /// </summary>
     public GenericRepository(DbContext dbContext)
     {
-        _dbContext = dbContext;
-        _dbSet = _dbContext.Set<T>();
+        DbContext = dbContext;
+        DbSet = DbContext.Set<T>();
     }
 
     /// <inheritdoc />
     public virtual async Task<T> Create(T entity, bool autoSave = true)
     {
-        var result = _dbContext.Add(entity).Entity;
+        var result = DbContext.Add(entity).Entity;
         if (autoSave)
         {
             await Save();
@@ -40,7 +40,7 @@ public abstract class GenericRepository<T> : IGenericRepository<T> where T : cla
             return null;
         }
 
-        var result = _dbSet.Remove(entity).Entity;
+        var result = DbSet.Remove(entity).Entity;
         if (autoSave)
         {
             await Save();
@@ -51,7 +51,7 @@ public abstract class GenericRepository<T> : IGenericRepository<T> where T : cla
 
     public async Task Delete(T entity, bool autoSave = true)
     {
-        _dbSet.Remove(entity);
+        DbSet.Remove(entity);
         if (autoSave)
         {
             await Save();
@@ -61,19 +61,19 @@ public abstract class GenericRepository<T> : IGenericRepository<T> where T : cla
     /// <inheritdoc />
     public virtual async Task<T?> GetFirst(params object?[]? keyValues)
     {
-        return await _dbSet.FindAsync(keyValues);
+        return await DbSet.FindAsync(keyValues);
     }
 
     /// <inheritdoc />
     public async Task<T?> GetFirst(Expression<Func<T, bool>> predicate)
     {
-        return await _dbSet.FirstOrDefaultAsync(predicate);
+        return await DbSet.FirstOrDefaultAsync(predicate);
     }
     
     /// <inheritdoc />
     public Task<IQueryable<T>> Get(Expression<Func<T, bool>> predicate)
     {
-        return Task.FromResult(_dbSet.Where(predicate));
+        return Task.FromResult(DbSet.Where(predicate));
     }
 
     /// <inheritdoc />
@@ -105,7 +105,7 @@ public abstract class GenericRepository<T> : IGenericRepository<T> where T : cla
     /// <inheritdoc />
     public virtual async Task<T?> Update(T entity, bool autoSave = true)
     {
-        var result = _dbSet.Update(entity).Entity;
+        var result = DbSet.Update(entity).Entity;
         
         if (autoSave)
         {
@@ -118,12 +118,12 @@ public abstract class GenericRepository<T> : IGenericRepository<T> where T : cla
     /// <inheritdoc />
     public virtual async Task<int> Save()
     {
-        return await _dbContext.SaveChangesAsync();
+        return await DbContext.SaveChangesAsync();
     }
 
     /// <inheritdoc />
     public virtual Task<DbSet<T>> All()
     {
-        return Task.FromResult(_dbSet);
+        return Task.FromResult(DbSet);
     }
 }

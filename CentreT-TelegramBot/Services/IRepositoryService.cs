@@ -4,17 +4,17 @@ namespace CentreT_TelegramBot.Services;
 
 public interface IRepositoryService // ToDo completely remove and integrate into corresponding repository interfaces
 {
-    Task<Chat?> GetChat(long id);
-    
-    Task<Chat?> GetChat(string name);
-
-    Task<Chat?> CreateChat(Chat chat);
-
-    Task<bool> DeleteChat(Chat chat);
-    
-    Task<bool> DeleteChat(long id);
-
-    Task<IQueryable<Chat>> GetAllChats();
+    // Task<Chat?> GetChat(long id);
+    //
+    // Task<Chat?> GetChat(string name);
+    //
+    // Task<Chat?> CreateChat(Chat chat);
+    //
+    // Task<bool> DeleteChat(Chat chat);
+    //
+    // Task<bool> DeleteChat(long id);
+    //
+    // Task<IQueryable<Chat>> GetAllChats();
 
     Task<UserJoinRequest?> GetActiveUserJoinRequest(long userId);
     

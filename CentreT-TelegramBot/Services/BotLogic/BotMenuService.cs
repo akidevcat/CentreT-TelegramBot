@@ -8,6 +8,7 @@ using CentreT_TelegramBot.Models.States;
 using CentreT_TelegramBot.Models.Configuration;
 using CentreT_TelegramBot.Extensions;
 using CentreT_TelegramBot.Models;
+using CentreT_TelegramBot.Repositories;
 using CentreT_TelegramBot.StateMachine;
 using Telegram.Bot;
 using Telegram.Bot.Exceptions;
@@ -19,16 +20,21 @@ namespace CentreT_TelegramBot.Services;
 
 public class BotMenuService : BotStateMachineService<UserState, UserEvent>, IBotMenuService
 {
-    private readonly IRepositoryService _repositoryService;
     private readonly ITelegramContext _telegramContext;
+    private readonly IUserRepository _userRepository;
+    private readonly IUserJoinRequestRepository _userJoinRequestRepository;
+    private readonly IChatRepository _chatRepository;
     private readonly IConfigurationService _configurationService;
     private readonly ILogger<BotMenuService> _logger;
     
-    public BotMenuService(IRepositoryService repositoryService, 
+    public BotMenuService(IUserRepository userRepository, IUserJoinRequestRepository userJoinRequestRepository,
+        IChatRepository chatRepository,
         ITelegramContext telegramContext, IConfigurationService configurationService, 
         ILogger<BotMenuService> logger)
     {
-        _repositoryService = repositoryService;
+        _userRepository = userRepository;
+        _userJoinRequestRepository = userJoinRequestRepository;
+        _chatRepository = chatRepository;
         _telegramContext = telegramContext;
         _configurationService = configurationService;
         _logger = logger;
@@ -168,7 +174,7 @@ public class BotMenuService : BotStateMachineService<UserState, UserEvent>, IBot
         UserEvent userEvent, object? argument = null)
     {
         var userId = update.Message!.From!.Id;
-        var user = await _repositoryService.GetOrCreateUser(userId);
+        var user = await _userRepository.GetOrCreate(userId);
         var stateUpdate = new StateUpdate(botClient, update, cancellationToken);
         var machine = CreateStateMachine(user.State, userId.ToString());
 
@@ -428,7 +434,7 @@ public class BotMenuService : BotStateMachineService<UserState, UserEvent>, IBot
 
         if (flFetchUser)
         {
-            var user = await _repositoryService.GetOrCreateUser(userId!.Value);
+            var user = await _userRepository.GetOrCreate(userId!.Value);
             if (user.Name != null)
                 argumentGroups["user"]["userName"] = user.Name;
             if (user.Pronouns != null)
@@ -441,7 +447,7 @@ public class BotMenuService : BotStateMachineService<UserState, UserEvent>, IBot
 
         if (flFetchActiveChat)
         {
-            var activeJoinRequest = await _repositoryService.GetActiveUserJoinRequest(userId!.Value);
+            var activeJoinRequest = await _userJoinRequestRepository.GetActive(userId!.Value);
             if (activeJoinRequest != null)
             {
                 if (activeJoinRequest.ChatId != null)
@@ -453,7 +459,7 @@ public class BotMenuService : BotStateMachineService<UserState, UserEvent>, IBot
 
         if (flFetchChats)
         {
-            var chats = await _repositoryService.GetAllChats();
+            var chats = await _chatRepository.GetAllChats();
             var result = new StringBuilder();
             foreach (var chat in chats)
             {
@@ -474,7 +480,7 @@ public class BotMenuService : BotStateMachineService<UserState, UserEvent>, IBot
     {
         var (_, _, userId, token) = update;
         
-        var user = await _repositoryService.GetOrCreateUser(userId!.Value);
+        var user = await _userRepository.GetOrCreate(userId!.Value);
         var arg = (string) update.Argument!;
 
         switch (property)
@@ -493,7 +499,7 @@ public class BotMenuService : BotStateMachineService<UserState, UserEvent>, IBot
                 break;
         }
 
-        await _repositoryService.SaveChanges();
+        await _userRepository.Save();
     }
     
     private async Task<bool> SaveJoinRequestChatFromArgument(StateUpdate update)
@@ -501,8 +507,8 @@ public class BotMenuService : BotStateMachineService<UserState, UserEvent>, IBot
         var botMessages = _configurationService.GetConfigurationObject<BotMessages>();
         var (_, _, userId, token) = update;
         
-        var user = await _repositoryService.GetOrCreateUser(userId!.Value);
-        var request = await _repositoryService.GetActiveUserJoinRequest(userId.Value);
+        var user = await _userRepository.GetOrCreate(userId!.Value);
+        var request = await _userJoinRequestRepository.GetActive(userId.Value);
         var arg = (string) update.Argument!;
 
         if (arg.Length > 30)
@@ -511,29 +517,30 @@ public class BotMenuService : BotStateMachineService<UserState, UserEvent>, IBot
             return false;
         }
 
-        var chat = await _repositoryService.GetChat(arg);
+        var chat = await _chatRepository.GetChat(arg);
         if (chat == null)
         {
             update.ArgumentErrorMessage = botMessages.ChatNotFound;
             return false;
         }
         
-        var anotherRequest = await _repositoryService.GetUserJoinRequestByChat(chat.Id);
-        if (anotherRequest != null && anotherRequest.Id != request.Id)
+        //var anotherRequest = await _userJoinRequestRepository.GetUserJoinRequestByChat(chat.Id);
+        var existingRequest = await _userJoinRequestRepository.Get(userId.Value, chat.Id);
+        if (existingRequest != null && existingRequest.Id != request.Id)
         {
             update.ArgumentErrorMessage = botMessages.JoinRequestAlreadyExists;
             return false;
         }
 
         request!.Chat = chat;
-        await _repositoryService.SaveChanges();
+        await _userJoinRequestRepository.Save();
         return true;
     }
 
     private async Task DeleteUserJoinRequest(StateUpdate update)
     {
         var (_, _, userId, token) = update;
-        await _repositoryService.DeleteActiveUserJoinRequest(userId!.Value);
+        await _userJoinRequestRepository.DeleteActive(userId!.Value);
     }
     
     private async Task<bool> UserPropertyNotNull(StateUpdate update, UserProperty property)
@@ -541,7 +548,7 @@ public class BotMenuService : BotStateMachineService<UserState, UserEvent>, IBot
         var botMessages = _configurationService.GetConfigurationObject<BotMessages>();
         var (_, _, userId, token) = update;
         
-        var user = await _repositoryService.GetOrCreateUser(userId!.Value);
+        var user = await _userRepository.GetOrCreate(userId!.Value);
 
         update.ArgumentErrorMessage = botMessages.ShouldNotBeEmpty;
         
@@ -560,7 +567,7 @@ public class BotMenuService : BotStateMachineService<UserState, UserEvent>, IBot
         var botMessages = _configurationService.GetConfigurationObject<BotMessages>();
         var (_, _, userId, token) = update;
         
-        var request = await _repositoryService.GetActiveUserJoinRequest(userId!.Value);
+        var request = await _userJoinRequestRepository.GetActive(userId!.Value);
 
         return request != null && request.Completed;
     }
@@ -570,9 +577,9 @@ public class BotMenuService : BotStateMachineService<UserState, UserEvent>, IBot
         var botMessages = _configurationService.GetConfigurationObject<BotMessages>();
         var (botClient, chatId, userId, token) = update;
         
-        var request = await _repositoryService.GetActiveUserJoinRequest(userId!.Value);
+        var request = await _userJoinRequestRepository.GetActive(userId!.Value);
         request!.DateCreated = DateTime.Now;
-        await _repositoryService.SaveChanges();
+        await _userJoinRequestRepository.Save();
     }
 
     private async Task CreateUserJoinRequest(StateUpdate update)
@@ -580,8 +587,8 @@ public class BotMenuService : BotStateMachineService<UserState, UserEvent>, IBot
         var botMessages = _configurationService.GetConfigurationObject<BotMessages>();
         var (botClient, chatId, userId, token) = update;
         
-        await _repositoryService.GetOrCreateActiveUserJoinRequest(userId!.Value);
-        await _repositoryService.SaveChanges();
+        await _userJoinRequestRepository.CreateActive(userId!.Value);
+        await _userJoinRequestRepository.Save();
     }
     
     private async Task<bool> UserJoinRequestsIsInLimit(StateUpdate update, int limit)
@@ -589,7 +596,7 @@ public class BotMenuService : BotStateMachineService<UserState, UserEvent>, IBot
         var botMessages = _configurationService.GetConfigurationObject<BotMessages>();
         var (botClient, chatId, userId, token) = update;
         
-        var userRequests = await _repositoryService.GetUserJoinRequestsByUser(userId!.Value);
+        var userRequests = await _userJoinRequestRepository.GetByUserId(userId!.Value);
         if (userRequests.Count() >= limit) // Limit is reached
         {
             await botClient.SendTextMessageAsync(chatId!, 
@@ -603,7 +610,7 @@ public class BotMenuService : BotStateMachineService<UserState, UserEvent>, IBot
 
     private async Task<bool> UserIsCompleted(StateUpdate update)
     {
-        return (await _repositoryService.GetOrCreateUser(update.UserId!.Value)).IsCompleted;
+        return (await _userRepository.GetOrCreate(update.UserId!.Value)).IsCompleted;
     }
     
     private Task<bool> ArgumentAsUserNameIsValid(StateUpdate update)
@@ -672,8 +679,8 @@ public class BotMenuService : BotStateMachineService<UserState, UserEvent>, IBot
 
     private async Task SyncUserState(StateUpdate update, UserState state)
     {
-        var user = await _repositoryService.GetOrCreateUser(update.UserId!.Value);
+        var user = await _userRepository.GetOrCreate(update.UserId!.Value);
         user.State = state;
-        await _repositoryService.SaveChanges();
+        await _userRepository.Save();
     }
 }

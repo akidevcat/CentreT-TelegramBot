@@ -2,6 +2,7 @@
 using CentreT_TelegramBot.Models;
 using CentreT_TelegramBot.Models.Configuration;
 using CentreT_TelegramBot.Models.States;
+using CentreT_TelegramBot.Repositories;
 using Telegram.Bot;
 using Telegram.Bot.Exceptions;
 using Telegram.Bot.Types;
@@ -11,15 +12,17 @@ namespace CentreT_TelegramBot.Services;
 
 public class BotGroupService : BotGenericService, IBotGroupService
 {
-    private readonly IRepositoryService _repositoryService;
+    private readonly IUserRepository _userRepository;
+    private readonly IChatRepository _chatRepository;
     private readonly IConfigurationService _configurationService;
     private readonly ILogger<BotGroupService> _logger;
     
-    public BotGroupService(IRepositoryService repositoryService, 
+    public BotGroupService(IUserRepository userRepository, IChatRepository chatRepository,
         IConfigurationService configurationService, 
         ILogger<BotGroupService> logger)
     {
-        _repositoryService = repositoryService;
+        _userRepository = userRepository;
+        _chatRepository = chatRepository;
         _configurationService = configurationService;
         _logger = logger;
     }
@@ -55,7 +58,7 @@ public class BotGroupService : BotGenericService, IBotGroupService
         var m = _configurationService?.GetConfigurationObject<BotMessages>()!;
         var arg = u.Message!.Text!.Split(" ")[1];
 
-        var user = await _repositoryService.GetOrCreateUser(u.Message.From!.Id);
+        var user = await _userRepository.GetOrCreate(u.Message.From!.Id);
         if (user.Status != UserStatus.Admin)
         {
             await ReplyUser(new StateUpdate(c, u, t), m.NotEnoughPermissions);
@@ -82,7 +85,7 @@ public class BotGroupService : BotGenericService, IBotGroupService
     {
         var m = _configurationService?.GetConfigurationObject<BotMessages>()!;
         
-        var user = await _repositoryService.GetOrCreateUser(u.Message!.From!.Id);
+        var user = await _userRepository.GetOrCreate(u.Message!.From!.Id);
         if (user.Status != UserStatus.Admin)
         {
             await ReplyUser(new StateUpdate(c, u, t), m.NotEnoughPermissions);
@@ -103,11 +106,11 @@ public class BotGroupService : BotGenericService, IBotGroupService
     
     private async Task<bool> RegisterChat(long id, string chatName)
     {
-        return await _repositoryService.CreateChat(new Models.Chat(id, chatName)) != null;
+        return await _chatRepository.CreateChat(new Models.Chat(id, chatName)) != null;
     }
     
     private async Task<bool> UnregisterChat(long id)
     {
-        return await _repositoryService.DeleteChat(id);
+        return await _chatRepository.DeleteChat(id);
     }
 }

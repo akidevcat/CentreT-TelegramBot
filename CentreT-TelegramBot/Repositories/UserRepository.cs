@@ -9,4 +9,9 @@ public class UserRepository : GenericRepository<Models.User>, IUserRepository
     {
         
     }
+
+    public async Task<Models.User> GetOrCreate(long userId)
+    {
+        return await GetOrCreate(new Models.User(userId), true, userId);
+    }
 }

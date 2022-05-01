@@ -73,7 +73,7 @@ public interface IGenericRepository<T> where T : class
     /// <returns>Deleted entity. If not found, returns null.</returns>
     public Task<T?> Delete(bool autoSave = true, params object?[]? keyValues);
 
-    public Task Delete(T entity, bool autoSave = true);
+    public Task<T?> Delete(T entity, bool autoSave = true);
 
     /// <summary>
     /// Saves this <see cref="DbContext"/>.

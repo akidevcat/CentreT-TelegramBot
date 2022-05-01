@@ -49,13 +49,15 @@ public abstract class GenericRepository<T> : IGenericRepository<T> where T : cla
         return result;
     }
 
-    public async Task Delete(T entity, bool autoSave = true)
+    public async Task<T?> Delete(T entity, bool autoSave = true)
     {
-        DbSet.Remove(entity);
+        var result = DbSet.Remove(entity).Entity;
         if (autoSave)
         {
             await Save();
         }
+
+        return result;
     }
 
     /// <inheritdoc />
